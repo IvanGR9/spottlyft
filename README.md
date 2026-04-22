@@ -16,4 +16,8 @@ El proyecto ataca dos frentes:
 * **Registro Técnico:** Interfaz optimizada para apuntar series y repeticiones sin fricción durante el entrenamiento.
 * **Arquitectura Profesional:** Backend robusto en Node.js capaz de gestionar múltiples comunidades (gimnasios) de forma aislada y segura.
 
+## Gestión del proyecto
+
+Tablero Trello: [SpottLyft Board](https://trello.com/invite/b/69e93b2ee4fbd922812bf7e7/ATTIb8525223bf6ef11095fa062350f8cadb173B11E0/spottlyft)
+
 ---
