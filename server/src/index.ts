@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import workoutRoutes from './routes/workout.routes.js';
 
 dotenv.config();
 
@@ -13,6 +14,8 @@ app.use(express.json());
 app.get('/health', (_req, res) => {
     res.status(200).json({ status: 'OK', app: 'SpottLyft API' });
 });
+
+app.use('/api/v1/workouts', workoutRoutes);
 
 app.listen(PORT, () => {
     console.log(`✅ SpottLyft API corriendo en http://localhost:${PORT}`);
