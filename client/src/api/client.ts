@@ -20,7 +20,7 @@ async function request<T>(method: string, endpoint: string, body?: unknown): Pro
 
 export const gymClient = {
     getById: (id: string) => request<Gym>('GET', `/gyms/${id}`),
-    getLeaderboard: (id: string) => request<LeaderboardEntry[]>('GET', `/gyms/${id}/leaderboard`),
+    getLeaderboard: (id: string) => request<LeaderboardEntry[]>('GET', `/leaderboard/${id}`),
 };
 
 export const userClient = {

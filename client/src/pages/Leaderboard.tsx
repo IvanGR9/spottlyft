@@ -1,21 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import LeaderboardCard from '../components/LeaderboardCard.js';
 import type { LeaderboardEntry } from '../types/index.js';
-
-const mockData: LeaderboardEntry[] = [
-    { userId: '1', username: 'IvanGR9', totalVolume: 430247, totalWorkouts: 67, streak: 6, rank: 1 },
-    { userId: '2', username: 'CarlosF', totalVolume: 381934, totalWorkouts: 54, streak: 5, rank: 2 },
-    { userId: '3', username: 'MartaLP', totalVolume: 312581, totalWorkouts: 48, streak: 12, rank: 3 },
-    { userId: '4', username: 'PabloM', totalVolume: 243763, totalWorkouts: 39, streak: 3, rank: 4 },
-    { userId: '5', username: 'LauraS', totalVolume: 178412, totalWorkouts: 28, streak: 6, rank: 5 },
-  ];
+import { gymClient } from '../api/client.js';
 
 type FilterType = 'volumen' | 'entrenamientos' | 'racha';
 
 export default function Leaderboard() {
   const [filter, setFilter] = useState<FilterType>('volumen');
+  const [data, setData] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const sorted = [...mockData].sort((a, b) => {
+  useEffect(() => {
+    async function fetchLeaderboard() {
+        try {
+            const result = await gymClient.getLeaderboard('gym-1');
+            setData(result);
+        } catch {
+            setError('No se pudo cargar el ranking');
+        } finally {
+            setLoading(false);
+        }
+    }
+    void fetchLeaderboard();
+}, []);
+
+  const sorted = [...data].sort((a, b) => {
     if (filter === 'volumen') return b.totalVolume - a.totalVolume;
     if (filter === 'entrenamientos') return b.totalWorkouts - a.totalWorkouts;
     return b.streak - a.streak;
@@ -26,7 +36,6 @@ export default function Leaderboard() {
       <h1 className="text-2xl font-bold text-white mb-1">Ranking 🏆</h1>
       <p className="text-[#666] text-sm mb-6">Clasificación de tu gimnasio</p>
 
-      {/* Filtros */}
       <div className="flex gap-2 mb-6">
         {(['volumen', 'entrenamientos', 'racha'] as FilterType[]).map(f => (
           <button
@@ -43,12 +52,21 @@ export default function Leaderboard() {
         ))}
       </div>
 
-      {/* Lista */}
-      <div className="flex flex-col gap-3">
-        {sorted.map(entry => (
-          <LeaderboardCard key={entry.userId} entry={entry} />
-        ))}
-      </div>
+      {loading && (
+        <div className="text-center text-[#666] py-10">Cargando ranking...</div>
+      )}
+
+      {error && (
+        <div className="bg-red-900/30 border border-red-800 rounded-xl p-4 text-red-400 text-sm">{error}</div>
+      )}
+
+      {!loading && !error && (
+        <div className="flex flex-col gap-3">
+          {sorted.map(entry => (
+            <LeaderboardCard key={entry.userId} entry={entry} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
