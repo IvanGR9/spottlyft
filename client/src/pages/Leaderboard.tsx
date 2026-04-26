@@ -3,11 +3,11 @@ import LeaderboardCard from '../components/LeaderboardCard.js';
 import type { LeaderboardEntry } from '../types/index.js';
 
 const mockData: LeaderboardEntry[] = [
-    { userId: '1', username: 'IvanGR9', totalVolume: 5765510, totalWorkouts: 67, streak: 6, rank: 1 },
-    { userId: '2', username: 'CarlosF', totalVolume: 4200000, totalWorkouts: 54, streak: 5, rank: 2 },
-    { userId: '3', username: 'MartaLP', totalVolume: 3800000, totalWorkouts: 48, streak: 12, rank: 3 },
-    { userId: '4', username: 'PabloM', totalVolume: 2900000, totalWorkouts: 39, streak: 3, rank: 4 },
-    { userId: '5', username: 'LauraS', totalVolume: 1950000, totalWorkouts: 28, streak: 6, rank: 5 },
+    { userId: '1', username: 'IvanGR9', totalVolume: 430247, totalWorkouts: 67, streak: 6, rank: 1 },
+    { userId: '2', username: 'CarlosF', totalVolume: 381934, totalWorkouts: 54, streak: 5, rank: 2 },
+    { userId: '3', username: 'MartaLP', totalVolume: 312581, totalWorkouts: 48, streak: 12, rank: 3 },
+    { userId: '4', username: 'PabloM', totalVolume: 243763, totalWorkouts: 39, streak: 3, rank: 4 },
+    { userId: '5', username: 'LauraS', totalVolume: 178412, totalWorkouts: 28, streak: 6, rank: 5 },
   ];
 
 type FilterType = 'volumen' | 'entrenamientos' | 'racha';

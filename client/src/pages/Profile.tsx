@@ -1,12 +1,12 @@
 import StatCard from '../components/StatCard.js';
 
 const recentWorkouts = [
-  { title: 'LEGS 5', date: '25 abr 2026', duration: '1h 22min', volume: 121391 },
-  { title: 'PULL 4', date: '24 abr 2026', duration: '51min', volume: 94936 },
-  { title: 'PUSH 3', date: '23 abr 2026', duration: '1h 06min', volume: 154425 },
-  { title: 'LOWER 2', date: '21 abr 2026', duration: '56min', volume: 301137 },
-  { title: 'UPPER 1', date: '20 abr 2026', duration: '1h 03min', volume: 193335 },
-];
+    { title: 'LEGS 5', date: '25 abr 2026', duration: '1h 22min', volume: 5748 },
+    { title: 'PULL 4', date: '24 abr 2026', duration: '51min', volume: 3813 },
+    { title: 'PUSH 3', date: '23 abr 2026', duration: '1h 06min', volume: 5580 },
+    { title: 'LOWER 2', date: '21 abr 2026', duration: '56min', volume: 11918 },
+    { title: 'UPPER 1', date: '20 abr 2026', duration: '1h 03min', volume: 6001 },
+  ];
 
 export default function Profile() {
   return (
@@ -29,7 +29,7 @@ export default function Profile() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <StatCard label="Entrenamientos" value="67" />
-        <StatCard label="Volumen total" value="5.7M kg" />
+        <StatCard label="Volumen total" value="430247 kg" />
         <StatCard label="Racha actual" value="6 días" />
       </div>
 
