@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import workoutRoutes from './routes/workout.routes.js';
 import leaderboardRoutes from './routes/leaderboard.routes.js';
+import gymRoutes from './routes/gym.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 dotenv.config();
 
@@ -18,6 +20,8 @@ app.get('/health', (_req, res) => {
 
 app.use('/api/v1/workouts', workoutRoutes);
 app.use('/api/v1/leaderboard', leaderboardRoutes);
+app.use('/api/v1/gyms', gymRoutes);
+app.use('/api/v1/users', userRoutes);
 
 app.listen(PORT, () => {
     console.log(`✅ SpottLyft API corriendo en http://localhost:${PORT}`);
