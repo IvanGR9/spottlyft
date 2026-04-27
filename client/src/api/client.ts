@@ -1,6 +1,8 @@
 import type { ApiResponse, Workout, LeaderboardEntry, User, Gym } from '../types/index.js';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1';
+const API_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? 'http://localhost:3000/api/v1'
+    : '/api/v1';
 
 async function request<T>(method: string, endpoint: string, body?: unknown): Promise<T> {
     const res = await fetch(`${API_URL}${endpoint}`, {
@@ -19,6 +21,7 @@ async function request<T>(method: string, endpoint: string, body?: unknown): Pro
 }
 
 export const gymClient = {
+    getAll: () => request<Gym[]>('GET', '/gyms'),
     getById: (id: string) => request<Gym>('GET', `/gyms/${id}`),
     getLeaderboard: (id: string) => request<LeaderboardEntry[]>('GET', `/leaderboard/${id}`),
 };
