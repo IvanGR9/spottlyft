@@ -11,8 +11,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+    origin: ['https://spottlyft.vercel.app', 'http://localhost:5173'],
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+}));
 
 app.get('/health', (_req, res) => {
     res.status(200).json({ status: 'OK', app: 'SpottLyft API' });
