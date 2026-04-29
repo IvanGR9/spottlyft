@@ -13,19 +13,8 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | null>(null);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>({
-        id: 'user-1',
-        username: 'IvanGR9',
-        email: 'ivan@spottlyft.com',
-        gymId: 'gym-1'
-    });
-
-    const [gym, setGym] = useState<Gym | null>({
-        id: 'gym-1',
-        name: 'Gimnasio Local',
-        location: 'Madrid',
-        qrCode: 'QR-GYM-001'
-    });
+    const [user, setUser] = useState<User | null>(null);
+    const [gym, setGym] = useState<Gym | null>(null);
 
     const logout = useCallback(() => {
         setUser(null);
