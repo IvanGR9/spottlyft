@@ -61,68 +61,89 @@ export default function Workout() {
   if (!started) {
     return (
       <div className="px-6 py-8 max-w-2xl mx-auto">
+
+        {/* Header */}
         <div className="mb-8">
-          <p className="text-[#71717a] text-sm mb-1">Registra tu entrenamiento</p>
+          <p className="text-[#71717a] text-sm mb-1">Registra tu próxima sesión</p>
           <h1 className="text-2xl font-bold text-white">Entrenar 💪</h1>
         </div>
 
-        <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-6">
-          <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-4">Nombre de la sesión</p>
+        {/* Input sesión */}
+        <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-6 mb-4">
+          <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-3">Nombre de la sesión</p>
           <input
             type="text"
             placeholder="Ej: PUSH 4, LEGS 5..."
             value={workout.title}
             onChange={e => setTitle(e.target.value)}
-            className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder:text-[#52525b] outline-none focus:border-[#f97316] transition-colors mb-6"
+            className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-white text-sm placeholder:text-[#52525b] outline-none focus:border-[#f97316] transition-colors"
           />
+        </div>
 
-          <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-3">Rutinas recientes</p>
-          <div className="grid grid-cols-2 gap-2 mb-6">
+        {/* Rutinas recientes */}
+        <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-6 mb-4">
+          <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-4">Rutinas recientes</p>
+          <div className="grid grid-cols-2 gap-2">
             {['PUSH 4', 'PULL 4', 'LEGS 5', 'UPPER 1'].map(r => (
               <button
                 key={r}
                 onClick={() => setTitle(r)}
-                className="bg-[#1c1c1c] hover:bg-[#2a2a2a] text-white text-sm font-medium py-2.5 rounded-xl transition-colors border border-[#2a2a2a]"
+                className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-colors text-sm font-semibold ${
+                  workout.title === r
+                    ? 'bg-[#f97316]/10 border-[#f97316]/40 text-[#f97316]'
+                    : 'bg-[#1c1c1c] border-[#2a2a2a] text-white hover:bg-[#2a2a2a]'
+                }`}
               >
-                {r}
+                <span>{r}</span>
+                <span className="text-xs opacity-40">→</span>
               </button>
             ))}
           </div>
-
-          <button
-            onClick={handleStart}
-            disabled={!workout.title.trim()}
-            className="w-full bg-[#f97316] hover:bg-[#ea6c0a] disabled:opacity-40 text-white font-bold py-4 rounded-xl transition-colors"
-          >
-            Iniciar entrenamiento
-          </button>
         </div>
+
+        {/* Botón iniciar */}
+        <button
+          onClick={handleStart}
+          disabled={!workout.title.trim()}
+          className="w-full bg-[#f97316] hover:bg-[#ea6c0a] disabled:opacity-40 text-white font-bold py-4 rounded-2xl transition-colors text-base"
+        >
+          Iniciar entrenamiento
+        </button>
       </div>
     );
   }
+
+  const completedSets = Object.values(doneSets).filter(Boolean).length;
+  const totalSets = workout.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
 
   return (
     <div className="px-6 py-8 max-w-2xl mx-auto">
 
       {/* Header sesión activa */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between mb-6">
         <div>
           <p className="text-[#71717a] text-xs mb-0.5">Sesión activa</p>
           <h1 className="text-xl font-bold text-white">{workout.title}</h1>
           <p className="text-[#52525b] text-xs mt-0.5">{workout.exercises.length} ejercicio(s) · {totalVolume.toLocaleString()} kg</p>
         </div>
         <div className="text-right">
-          <p className="text-[#f97316] font-bold text-xl font-mono">{formatTime(elapsed)}</p>
-          <p className="text-[#52525b] text-xs">Tiempo de sesión</p>
+          <p className="text-[#f97316] font-bold text-2xl font-mono">{formatTime(elapsed)}</p>
+          <p className="text-[#52525b] text-xs">Tiempo</p>
         </div>
       </div>
 
-      {/* Barra de progreso */}
-      <div className="bg-[#1c1c1c] rounded-full h-1.5 mb-6">
-        <div
-          className="bg-[#f97316] h-1.5 rounded-full transition-all"
-          style={{ width: `${Math.min((workout.exercises.length / 8) * 100, 100)}%` }}
-        />
+      {/* Progreso */}
+      <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-4 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider">Progreso</p>
+          <p className="text-white text-xs font-semibold">{completedSets}/{totalSets} series</p>
+        </div>
+        <div className="bg-[#1c1c1c] rounded-full h-2">
+          <div
+            className="bg-[#f97316] h-2 rounded-full transition-all"
+            style={{ width: totalSets > 0 ? `${Math.min((completedSets / totalSets) * 100, 100)}%` : '0%' }}
+          />
+        </div>
       </div>
 
       {/* Ejercicios */}
@@ -133,24 +154,29 @@ export default function Workout() {
               <p className="text-white font-bold text-sm">{ex.name}</p>
               <p className="text-[#52525b] text-xs mt-0.5">{ex.muscleGroup}</p>
             </div>
-            <span className="text-xs bg-[#f97316]/10 text-[#f97316] px-2 py-1 rounded-full border border-[#f97316]/20">
+            <span className="text-xs bg-[#f97316]/10 text-[#f97316] px-3 py-1 rounded-full border border-[#f97316]/20 font-medium">
               {ex.sets.length} series
             </span>
           </div>
 
           {/* Cabecera tabla */}
           <div className="grid grid-cols-4 gap-2 mb-2 px-1">
-            <span className="text-[#52525b] text-xs text-center">SERIE</span>
-            <span className="text-[#52525b] text-xs text-center">KG</span>
-            <span className="text-[#52525b] text-xs text-center">REPS</span>
-            <span className="text-[#52525b] text-xs text-center">✓</span>
+            <span className="text-[#52525b] text-xs text-center font-medium">SERIE</span>
+            <span className="text-[#52525b] text-xs text-center font-medium">KG</span>
+            <span className="text-[#52525b] text-xs text-center font-medium">REPS</span>
+            <span className="text-[#52525b] text-xs text-center font-medium">✓</span>
           </div>
 
           {ex.sets.map((set, setIndex) => {
             const key = `${ex.id}-${setIndex}`;
             const done = doneSets[key];
             return (
-              <div key={setIndex} className={`grid grid-cols-4 gap-2 mb-2 items-center px-1 py-1 rounded-lg transition-colors ${done ? 'bg-[#f97316]/5' : ''}`}>
+              <div
+                key={setIndex}
+                className={`grid grid-cols-4 gap-2 mb-2 items-center px-1 py-1.5 rounded-xl transition-colors border ${
+                  done ? 'bg-[#f97316]/5 border-[#f97316]/10' : 'border-transparent'
+                }`}
+              >
                 <span className="text-[#71717a] text-sm text-center font-medium">{setIndex + 1}</span>
                 <input
                   type="number"
@@ -180,7 +206,7 @@ export default function Workout() {
 
           <button
             onClick={() => addSet(ex.id)}
-            className="w-full mt-2 py-2 text-[#52525b] text-xs border border-dashed border-[#2a2a2a] rounded-xl hover:text-white hover:border-[#444] transition-colors"
+            className="w-full mt-3 py-2.5 text-[#52525b] text-xs border border-dashed border-[#2a2a2a] rounded-xl hover:text-white hover:border-[#444] transition-colors"
           >
             + Añadir serie
           </button>
@@ -191,18 +217,23 @@ export default function Workout() {
       {showExerciseList ? (
         <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5 mb-4">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-white font-bold text-sm">Selecciona un ejercicio</p>
-            <button onClick={() => setShowExerciseList(false)} className="text-[#52525b] hover:text-white text-sm">✕</button>
+            <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider">Selecciona un ejercicio</p>
+            <button
+              onClick={() => setShowExerciseList(false)}
+              className="text-[#52525b] hover:text-white text-lg leading-none transition-colors"
+            >
+              ✕
+            </button>
           </div>
           <div className="flex flex-col gap-1">
             {exerciseSuggestions.map(ex => (
               <button
                 key={ex.name}
                 onClick={() => { addExercise(ex.name, ex.muscle); setShowExerciseList(false); }}
-                className="flex items-center justify-between text-left px-3 py-2.5 text-white text-sm hover:bg-[#1c1c1c] rounded-xl transition-colors"
+                className="flex items-center justify-between text-left px-3 py-3 text-white text-sm hover:bg-[#1c1c1c] rounded-xl transition-colors"
               >
-                <span>{ex.name}</span>
-                <span className="text-[#52525b] text-xs">{ex.muscle}</span>
+                <span className="font-medium">{ex.name}</span>
+                <span className="text-[#52525b] text-xs bg-[#1c1c1c] px-2 py-0.5 rounded-full">{ex.muscle}</span>
               </button>
             ))}
           </div>
