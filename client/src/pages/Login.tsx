@@ -43,6 +43,7 @@ export default function Login() {
       
       {/* Logo */}
       <div className="mb-10 text-center">
+        <img src="/logo.png" alt="SpottLyft" className="w-36 h-36 mb-4 rounded-2xl mx-auto" />
         <h1 className="text-4xl font-bold text-white tracking-tight">
           SPOTT<span className="text-[#f97316]">LYFT</span>
         </h1>

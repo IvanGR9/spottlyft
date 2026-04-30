@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext.js';
 import { workoutClient } from '../api/client.js';
 import type { Workout } from '../types/index.js';
@@ -7,6 +8,7 @@ const tabs = ['Resumen', 'Historial', 'Logros'];
 
 export default function Profile() {
   const { user, gym } = useUser();
+  const navigate = useNavigate();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Resumen');
@@ -24,6 +26,32 @@ export default function Profile() {
     }
     void fetchWorkouts();
   }, []);
+
+  if (user?.id === 'guest') {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center px-6">
+        <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-10 max-w-sm w-full text-center">
+          <p className="text-6xl mb-6">👤</p>
+          <h2 className="text-white font-bold text-xl mb-3">Crea tu perfil en SpottLyft</h2>
+          <p className="text-[#71717a] text-sm mb-8">
+            Regístrate para ver tu historial, estadísticas y posición en el ranking
+          </p>
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full bg-[#f97316] hover:bg-[#ea6c0a] text-white font-bold py-3.5 rounded-xl transition-colors text-sm mb-3"
+          >
+            Crear cuenta
+          </button>
+          <button
+            onClick={() => navigate('/leaderboard')}
+            className="w-full bg-[#141414] hover:bg-[#1c1c1c] text-white font-semibold py-3.5 rounded-xl border border-[#2a2a2a] transition-colors text-sm"
+          >
+            Ver ranking
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-6 py-8 max-w-4xl mx-auto">
