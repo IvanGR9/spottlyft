@@ -4,29 +4,31 @@ import { useWorkout } from '../hooks/useWorkout.js';
 import { useUser } from '../context/UserContext.js';
 
 const exerciseSuggestions = [
-  { name: 'Press de Pecho en Máquina', muscle: 'Pecho' },
-  { name: 'Aperturas en Máquina', muscle: 'Pecho' },
-  { name: 'Jalón al Pecho en Polea', muscle: 'Espalda' },
-  { name: 'Remo Unilateral en Polea con Banco', muscle: 'Espalda' },
-  { name: 'Sentadilla Belt Squat', muscle: 'Cuádriceps' },
-  { name: 'Prensa de Piernas', muscle: 'Cuádriceps' },
-  { name: 'Curl Femoral Sentado', muscle: 'Isquios' },
-  { name: 'Curl de Bíceps con Mancuerna', muscle: 'Bíceps' },
-  { name: 'Extensiones de Tríceps en Polea', muscle: 'Tríceps' },
-  { name: 'Elevaciones Laterales con Mancuerna', muscle: 'Hombro' },
-  { name: 'Press Militar en Smith', muscle: 'Hombro' },
-  { name: 'Curl Predicador en Máquina', muscle: 'Bíceps' },
+  { name: 'Press de Pecho en Máquina',        muscle: 'Pecho',       type: 'Compuesto' },
+  { name: 'Aperturas en Máquina',              muscle: 'Pecho',       type: 'Aislado'   },
+  { name: 'Jalón al Pecho en Polea',           muscle: 'Espalda',     type: 'Compuesto' },
+  { name: 'Remo Unilateral en Polea con Banco',muscle: 'Espalda',     type: 'Compuesto' },
+  { name: 'Sentadilla Belt Squat',             muscle: 'Cuádriceps',  type: 'Compuesto' },
+  { name: 'Prensa de Piernas',                 muscle: 'Cuádriceps',  type: 'Compuesto' },
+  { name: 'Curl Femoral Sentado',              muscle: 'Isquios',     type: 'Aislado'   },
+  { name: 'Curl de Bíceps con Mancuerna',      muscle: 'Bíceps',      type: 'Aislado'   },
+  { name: 'Extensiones de Tríceps en Polea',   muscle: 'Tríceps',     type: 'Aislado'   },
+  { name: 'Elevaciones Laterales con Mancuerna',muscle: 'Hombro',     type: 'Aislado'   },
+  { name: 'Press Militar en Smith',            muscle: 'Hombro',      type: 'Compuesto' },
+  { name: 'Curl Predicador en Máquina',        muscle: 'Bíceps',      type: 'Aislado'   },
 ];
 
 export default function Workout() {
-  const { workout, setTitle, addExercise, addSet, updateSet, totalVolume, reset } = useWorkout();
+  const { workout, setTitle, addExercise, replaceExercise, addSet, updateSet, totalVolume, reset } = useWorkout();
   const { user } = useUser();
   const navigate = useNavigate();
   const [started, setStarted] = useState(false);
   const [showExerciseList, setShowExerciseList] = useState(false);
+  const [replacingExerciseId, setReplacingExerciseId] = useState<string | null>(null);
   const [doneSets, setDoneSets] = useState<Record<string, boolean>>({});
   const [elapsed, setElapsed] = useState(0);
   const [timerInterval, setTimerInterval] = useState<ReturnType<typeof setInterval> | null>(null);
+  const [paused, setPaused] = useState(false);
 
   function startTimer() {
     const interval = setInterval(() => setElapsed(e => e + 1), 1000);
@@ -35,6 +37,16 @@ export default function Workout() {
 
   function stopTimer() {
     if (timerInterval) clearInterval(timerInterval);
+  }
+
+  function togglePause() {
+    if (paused) {
+      startTimer();
+      setPaused(false);
+    } else {
+      stopTimer();
+      setPaused(true);
+    }
   }
 
   function formatTime(seconds: number) {
@@ -60,6 +72,29 @@ export default function Workout() {
     setStarted(false);
     setDoneSets({});
     setElapsed(0);
+  }
+
+  function handleSelectExercise(name: string, muscle: string, type: string) {
+    if (replacingExerciseId) {
+      replaceExercise(replacingExerciseId, name, muscle, type);
+      setReplacingExerciseId(null);
+    } else {
+      addExercise(name, muscle, type);
+      setShowExerciseList(false);
+    }
+  }
+
+  function closeSelector() {
+    setShowExerciseList(false);
+    setReplacingExerciseId(null);
+  }
+
+  function completeExercise(exerciseId: string, setsCount: number) {
+    setDoneSets(prev => {
+      const updated = { ...prev };
+      for (let i = 0; i < setsCount; i++) updated[`${exerciseId}-${i}`] = true;
+      return updated;
+    });
   }
 
   if (user?.id === 'guest') {
@@ -156,9 +191,14 @@ export default function Workout() {
           <h1 className="text-xl font-bold text-white">{workout.title}</h1>
           <p className="text-[#52525b] text-xs mt-0.5">{workout.exercises.length} ejercicio(s) · {totalVolume.toLocaleString()} kg</p>
         </div>
-        <div className="text-right">
-          <p className="text-[#f97316] font-bold text-2xl font-mono">{formatTime(elapsed)}</p>
-          <p className="text-[#52525b] text-xs">Tiempo</p>
+        <div className="text-right flex flex-col items-end gap-1">
+          <p className={`font-bold text-2xl font-mono ${paused ? 'text-[#52525b]' : 'text-[#f97316]'}`}>{formatTime(elapsed)}</p>
+          <button
+            onClick={togglePause}
+            className="text-xs px-3 py-1 rounded-lg border transition-colors font-medium border-[#2a2a2a] text-[#71717a] hover:text-white hover:border-[#444]"
+          >
+            {paused ? '▶ Reanudar' : '⏸ Pausar'}
+          </button>
         </div>
       </div>
 
@@ -179,21 +219,32 @@ export default function Workout() {
       {/* Ejercicios */}
       {workout.exercises.map((ex) => (
         <div key={ex.id} className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5 mb-4">
-          <div className="flex items-center justify-between mb-4">
-            <div>
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1 min-w-0 mr-3">
               <p className="text-white font-bold text-sm">{ex.name}</p>
-              <p className="text-[#52525b] text-xs mt-0.5">{ex.muscleGroup}</p>
+              <p className="text-[#52525b] text-xs mt-0.5">
+                {ex.muscleGroup}{ex.type ? ` · ${ex.type}` : ''}
+              </p>
             </div>
-            <span className="text-xs bg-[#f97316]/10 text-[#f97316] px-3 py-1 rounded-full border border-[#f97316]/20 font-medium">
-              {ex.sets.length} series
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setReplacingExerciseId(ex.id)}
+                className="text-xs text-[#71717a] hover:text-white border border-[#2a2a2a] hover:border-[#444] px-2.5 py-1 rounded-lg transition-colors"
+              >
+                Cambiar
+              </button>
+              <span className="text-xs bg-[#f97316]/10 text-[#f97316] px-3 py-1 rounded-full border border-[#f97316]/20 font-medium">
+                {ex.sets.length} series
+              </span>
+            </div>
           </div>
 
           {/* Cabecera tabla */}
-          <div className="grid grid-cols-4 gap-2 mb-2 px-1">
+          <div className="grid grid-cols-5 gap-2 mb-2 px-1">
             <span className="text-[#52525b] text-xs text-center font-medium">SERIE</span>
             <span className="text-[#52525b] text-xs text-center font-medium">KG</span>
             <span className="text-[#52525b] text-xs text-center font-medium">REPS</span>
+            <span className="text-[#52525b] text-xs text-center font-medium">RIR</span>
             <span className="text-[#52525b] text-xs text-center font-medium">✓</span>
           </div>
 
@@ -203,7 +254,7 @@ export default function Workout() {
             return (
               <div
                 key={setIndex}
-                className={`grid grid-cols-4 gap-2 mb-2 items-center px-1 py-1.5 rounded-xl transition-colors border ${
+                className={`grid grid-cols-5 gap-2 mb-2 items-center px-1 py-1.5 rounded-xl transition-colors border ${
                   done ? 'bg-[#f97316]/5 border-[#f97316]/10' : 'border-transparent'
                 }`}
               >
@@ -222,6 +273,14 @@ export default function Workout() {
                   placeholder="0"
                   className="bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-2 py-2 text-white text-sm text-center outline-none focus:border-[#f97316] transition-colors"
                 />
+                <input
+                  type="number"
+                  value={set.rir ?? ''}
+                  onChange={e => updateSet(ex.id, setIndex, 'rir', Number(e.target.value))}
+                  placeholder="0"
+                  min={0}
+                  className="bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-2 py-2 text-white text-sm text-center outline-none focus:border-[#f97316] transition-colors"
+                />
                 <button
                   onClick={() => toggleSet(ex.id, setIndex)}
                   className={`w-8 h-8 rounded-lg mx-auto flex items-center justify-center text-xs font-bold transition-all ${
@@ -234,24 +293,31 @@ export default function Workout() {
             );
           })}
 
-          <button
-            onClick={() => addSet(ex.id)}
-            className="w-full mt-3 py-2.5 text-[#52525b] text-xs border border-dashed border-[#2a2a2a] rounded-xl hover:text-white hover:border-[#444] transition-colors"
-          >
-            + Añadir serie
-          </button>
+          <div className="flex flex-col gap-2 mt-3">
+            <button
+              onClick={() => addSet(ex.id)}
+              className="w-full py-2.5 text-[#f97316] text-xs border border-[#f97316]/40 rounded-xl hover:bg-[#f97316]/5 transition-colors font-medium"
+            >
+              + Añadir serie
+            </button>
+            <button
+              onClick={() => completeExercise(ex.id, ex.sets.length)}
+              className="w-full py-2.5 bg-[#f97316] hover:bg-[#ea6c0a] text-white text-xs font-bold rounded-xl transition-colors"
+            >
+              Completar ejercicio ✓
+            </button>
+          </div>
         </div>
       ))}
 
-      {/* Añadir ejercicio */}
-      {showExerciseList ? (
+      {/* Selector ejercicio (añadir o cambiar) */}
+      {(showExerciseList || replacingExerciseId) ? (
         <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5 mb-4">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider">Selecciona un ejercicio</p>
-            <button
-              onClick={() => setShowExerciseList(false)}
-              className="text-[#52525b] hover:text-white text-lg leading-none transition-colors"
-            >
+            <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider">
+              {replacingExerciseId ? 'Cambiar ejercicio' : 'Selecciona un ejercicio'}
+            </p>
+            <button onClick={closeSelector} className="text-[#52525b] hover:text-white text-lg leading-none transition-colors">
               ✕
             </button>
           </div>
@@ -259,11 +325,14 @@ export default function Workout() {
             {exerciseSuggestions.map(ex => (
               <button
                 key={ex.name}
-                onClick={() => { addExercise(ex.name, ex.muscle); setShowExerciseList(false); }}
+                onClick={() => handleSelectExercise(ex.name, ex.muscle, ex.type)}
                 className="flex items-center justify-between text-left px-3 py-3 text-white text-sm hover:bg-[#1c1c1c] rounded-xl transition-colors"
               >
-                <span className="font-medium">{ex.name}</span>
-                <span className="text-[#52525b] text-xs bg-[#1c1c1c] px-2 py-0.5 rounded-full">{ex.muscle}</span>
+                <div>
+                  <span className="font-medium">{ex.name}</span>
+                  <span className="block text-[#52525b] text-xs mt-0.5">{ex.type}</span>
+                </div>
+                <span className="text-[#52525b] text-xs bg-[#1c1c1c] px-2 py-0.5 rounded-full shrink-0 ml-2">{ex.muscle}</span>
               </button>
             ))}
           </div>
@@ -276,6 +345,32 @@ export default function Workout() {
           + Añadir ejercicio
         </button>
       )}
+
+      {/* Ejercicios restantes */}
+      {(() => {
+        const remaining = workout.exercises
+          .map(ex => ({
+            name: ex.name,
+            pending: ex.sets.filter((_, i) => !doneSets[`${ex.id}-${i}`]).length,
+          }))
+          .filter(ex => ex.pending > 0);
+        if (remaining.length === 0) return null;
+        return (
+          <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-4 mb-4">
+            <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-3">Ejercicios restantes</p>
+            <div className="flex flex-col gap-2">
+              {remaining.map(ex => (
+                <div key={ex.name} className="flex items-center justify-between">
+                  <span className="text-white text-sm">{ex.name}</span>
+                  <span className="text-[#52525b] text-xs bg-[#1c1c1c] px-2.5 py-1 rounded-full">
+                    {ex.pending} serie{ex.pending > 1 ? 's' : ''} pendiente{ex.pending > 1 ? 's' : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Finalizar */}
       <button

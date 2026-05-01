@@ -17,12 +17,14 @@ export interface Exercise {
     id: string;
     name: string;
     muscleGroup: string;
+    type?: string;
     sets: Set[];
 }
 
 export interface Set {
     reps: number;
     weight: number;
+    rir?: number;
 }
 
 export interface Workout {

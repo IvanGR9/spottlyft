@@ -12,7 +12,7 @@ export function useWorkout() {
         exercises: []
     });
 
-    const addExercise = useCallback((name: string, muscleGroup: string) => {
+    const addExercise = useCallback((name: string, muscleGroup: string, type?: string) => {
         setWorkout(prev => ({
             ...prev,
             exercises: [
@@ -21,9 +21,19 @@ export function useWorkout() {
                     id: crypto.randomUUID(),
                     name,
                     muscleGroup,
-                    sets: [{ reps: 0, weight: 0 }]
+                    type,
+                    sets: [{ reps: 0, weight: 0, rir: 0 }]
                 }
             ]
+        }));
+    }, []);
+
+    const replaceExercise = useCallback((id: string, name: string, muscleGroup: string, type?: string) => {
+        setWorkout(prev => ({
+            ...prev,
+            exercises: prev.exercises.map(ex =>
+                ex.id === id ? { ...ex, name, muscleGroup, type } : ex
+            )
         }));
     }, []);
 
@@ -32,7 +42,7 @@ export function useWorkout() {
             ...prev,
             exercises: prev.exercises.map(ex =>
                 ex.id === exerciseId
-                    ? { ...ex, sets: [...ex.sets, { reps: 0, weight: 0 }] }
+                    ? { ...ex, sets: [...ex.sets, { reps: 0, weight: 0, rir: 0 }] }
                     : ex
             )
         }));
@@ -68,6 +78,7 @@ export function useWorkout() {
         workout,
         setTitle: (title: string) => setWorkout(prev => ({ ...prev, title })),
         addExercise,
+        replaceExercise,
         addSet,
         updateSet,
         totalVolume,
