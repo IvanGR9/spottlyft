@@ -1,16 +1,23 @@
+import { fileURLToPath } from 'url';
+import path from 'path';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import connectDB from './db.js';
 import workoutRoutes from './routes/workout.routes.js';
 import leaderboardRoutes from './routes/leaderboard.routes.js';
 import gymRoutes from './routes/gym.routes.js';
 import userRoutes from './routes/user.routes.js';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(express.json());
 app.use(cors({
     origin: (origin, callback) => {
         const allowed = [
