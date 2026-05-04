@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext.js';
+import { userClient, gymClient } from '../api/client.js';
 
 type AuthMode = 'welcome' | 'login' | 'register';
 
@@ -14,12 +15,12 @@ export default function Login() {
   const navigate = useNavigate();
 
   function handleGuest() {
-    setUser({ id: 'guest', username: 'Invitado', email: '', gymId: 'gym-1' });
-    setGym({ id: 'gym-1', name: 'Gimnasio Local', location: 'Madrid', qrCode: 'QR-GYM-001' });
+    setUser({ id: 'guest', username: 'Invitado', email: '', gymId: 'lowgim' });
+    setGym({ id: 'lowgim', name: 'Lowgim', location: 'Madrid', qrCode: 'lowgim' });
     navigate('/');
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (username.trim().length < 3) {
       setError('El nombre debe tener al menos 3 caracteres');
       return;
@@ -33,9 +34,17 @@ export default function Login() {
       return;
     }
     setError('');
-    setUser({ id: 'user-1', username, email, gymId: 'gym-1' });
-    setGym({ id: 'gym-1', name: 'Gimnasio Local', location: 'Madrid', qrCode: 'QR-GYM-001' });
-    navigate('/');
+    try {
+      const user = mode === 'login'
+        ? await userClient.login(username.trim(), password)
+        : await userClient.create({ username: username.trim(), email, gymId: 'lowgim', password });
+      const gym = await gymClient.getById(user.gymId);
+      setUser(user);
+      setGym(gym);
+      navigate('/');
+    } catch (err: unknown) {
+      setError((err as Error).message);
+    }
   }
 
   return (

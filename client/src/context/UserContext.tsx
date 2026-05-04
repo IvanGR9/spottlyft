@@ -12,13 +12,36 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | null>(null);
 
+function loadFromStorage<T>(key: string): T | null {
+    try {
+        const raw = localStorage.getItem(key);
+        return raw ? (JSON.parse(raw) as T) : null;
+    } catch {
+        return null;
+    }
+}
+
 export function UserProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [gym, setGym] = useState<Gym | null>(null);
+    const [user, setUserState] = useState<User | null>(() => loadFromStorage<User>('sl_user'));
+    const [gym, setGymState] = useState<Gym | null>(() => loadFromStorage<Gym>('sl_gym'));
+
+    const setUser = useCallback((u: User | null) => {
+        setUserState(u);
+        if (u) localStorage.setItem('sl_user', JSON.stringify(u));
+        else localStorage.removeItem('sl_user');
+    }, []);
+
+    const setGym = useCallback((g: Gym | null) => {
+        setGymState(g);
+        if (g) localStorage.setItem('sl_gym', JSON.stringify(g));
+        else localStorage.removeItem('sl_gym');
+    }, []);
 
     const logout = useCallback(() => {
-        setUser(null);
-        setGym(null);
+        setUserState(null);
+        setGymState(null);
+        localStorage.removeItem('sl_user');
+        localStorage.removeItem('sl_gym');
     }, []);
 
     const isAuthenticated = user !== null;

@@ -6,6 +6,13 @@ export async function getUserById(id: string) {
   return user;
 }
 
+export async function getUserByUsername(username: string, password: string) {
+  const user = await User.findOne({ username });
+  if (!user) throw new Error('NOT_FOUND');
+  if (user.password !== password) throw new Error('INVALID_PASSWORD');
+  return User.findById(user._id).select('-password');
+}
+
 export async function createUser(data: {
   username: string;
   email: string;
@@ -13,6 +20,5 @@ export async function createUser(data: {
   password: string;
 }) {
   const user = await User.create(data);
-  const { password: _pw, ...rest } = user.toObject();
-  return rest;
+  return User.findById(user._id).select('-password');
 }

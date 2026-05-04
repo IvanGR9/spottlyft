@@ -8,6 +8,16 @@ const UserSchema = new Schema({
   level:    { type: Number, default: 1 },
   xp:       { type: Number, default: 0 },
   streak:   { type: Number, default: 0 },
-}, { timestamps: { createdAt: true, updatedAt: false } });
+}, {
+  timestamps: { createdAt: true, updatedAt: false },
+  toJSON: {
+    transform: (_doc, ret) => {
+      ret.id = ret._id.toString();
+      delete ret._id;
+      delete ret.__v;
+      return ret;
+    },
+  },
+});
 
 export default mongoose.model('User', UserSchema);

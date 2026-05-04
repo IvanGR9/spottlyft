@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import type { LeaderboardEntry } from '../types/index.js';
 import { gymClient } from '../api/client.js';
+import { useUser } from '../context/UserContext.js';
 
 type FilterType = 'volumen' | 'entrenamientos' | 'racha';
 
 export default function Leaderboard() {
+  const { gym, user } = useUser();
+  const gymId = gym?.id ?? user?.gymId ?? 'lowgim';
+
   const [filter, setFilter] = useState<FilterType>('volumen');
   const [data, setData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +17,7 @@ export default function Leaderboard() {
   useEffect(() => {
     async function fetchLeaderboard() {
       try {
-        const result = await gymClient.getLeaderboard('gym-1');
+        const result = await gymClient.getLeaderboard(gymId);
         setData(result);
       } catch {
         setError('No se pudo cargar el ranking');
@@ -22,7 +26,7 @@ export default function Leaderboard() {
       }
     }
     void fetchLeaderboard();
-  }, []);
+  }, [gymId]);
 
   const sorted = [...data].sort((a, b) => {
     if (filter === 'volumen') return b.totalVolume - a.totalVolume;

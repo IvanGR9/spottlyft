@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Gym from '../models/Gym.js';
 
 export async function getAllGyms() {
@@ -5,7 +6,9 @@ export async function getAllGyms() {
 }
 
 export async function getGymById(id: string) {
-  const gym = await Gym.findById(id);
+  const gym = mongoose.isValidObjectId(id)
+    ? await Gym.findById(id)
+    : await Gym.findOne({ qrCode: id });
   if (!gym) throw new Error('NOT_FOUND');
   return gym;
 }

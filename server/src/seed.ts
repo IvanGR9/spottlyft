@@ -124,14 +124,14 @@ function buildExercises(category: string, kgOverrides?: Record<string, number>) 
 // ─── perfiles ─────────────────────────────────────────────────────────────────
 
 const profiles = [
-  { username: 'IvanGR9', email: 'ivan@ironhub.com',   password: 'Lukegr01',  workouts: 67, streak: 6, targetVol: 60_121, level: 18, xp: 9840, cats: ['PUSH','PULL','LEGS'] },
-  { username: 'CarlosF', email: 'carlos@ironhub.com',  password: 'seed$pass', workouts: 45, streak: 3, targetVol: 40_489, level: 14, xp: 7230, cats: ['PUSH','PULL','LEGS','UPPER'] },
-  { username: 'MartaLP', email: 'marta@ironhub.com',   password: 'seed$pass', workouts: 38, streak: 5, targetVol: 34_178, level: 11, xp: 5870, cats: ['UPPER','LEGS','PULL'] },
-  { username: 'PabloMR', email: 'pablo@ironhub.com',   password: 'seed$pass', workouts: 28, streak: 1, targetVol: 25_163, level: 9,  xp: 3940, cats: ['PUSH','PULL','LEGS'] },
-  { username: 'DiegoVM', email: 'diego@ironhub.com',   password: 'seed$pass', workouts: 31, streak: 4, targetVol: 27_847, level: 10, xp: 4610, cats: ['PUSH','PULL','LEGS','UPPER'] },
-  { username: 'LauraS',  email: 'laura@ironhub.com',   password: 'seed$pass', workouts: 22, streak: 2, targetVol: 19_834, level: 7,  xp: 2780, cats: ['UPPER','LEGS'] },
-  { username: 'AlexTG',  email: 'alex@ironhub.com',    password: 'seed$pass', workouts: 24, streak: 1, targetVol: 21_573, level: 8,  xp: 3370, cats: ['PUSH','PULL','LEGS'] },
-  { username: 'SofiaAR', email: 'sofia@ironhub.com',   password: 'seed$pass', workouts: 17, streak: 0, targetVol: 15_287, level: 6,  xp: 2140, cats: ['UPPER','LEGS'] },
+  { username: 'IvanGR9', email: 'ivan@lowgim.com',   password: 'Lukegr01',  workouts: 67, streak: 6, targetVol: 60_121, level: 18, xp: 9840, cats: ['PUSH','PULL','LEGS'] },
+  { username: 'CarlosF', email: 'carlos@lowgim.com',  password: 'seed$pass', workouts: 45, streak: 3, targetVol: 40_489, level: 14, xp: 7230, cats: ['PUSH','PULL','LEGS','UPPER'] },
+  { username: 'MartaLP', email: 'marta@lowgim.com',   password: 'seed$pass', workouts: 38, streak: 5, targetVol: 34_178, level: 11, xp: 5870, cats: ['UPPER','LEGS','PULL'] },
+  { username: 'PabloMR', email: 'pablo@lowgim.com',   password: 'seed$pass', workouts: 28, streak: 1, targetVol: 25_163, level: 9,  xp: 3940, cats: ['PUSH','PULL','LEGS'] },
+  { username: 'DiegoVM', email: 'diego@lowgim.com',   password: 'seed$pass', workouts: 31, streak: 4, targetVol: 27_847, level: 10, xp: 4610, cats: ['PUSH','PULL','LEGS','UPPER'] },
+  { username: 'LauraS',  email: 'laura@lowgim.com',   password: 'seed$pass', workouts: 22, streak: 2, targetVol: 19_834, level: 7,  xp: 2780, cats: ['UPPER','LEGS'] },
+  { username: 'AlexTG',  email: 'alex@lowgim.com',    password: 'seed$pass', workouts: 24, streak: 1, targetVol: 21_573, level: 8,  xp: 3370, cats: ['PUSH','PULL','LEGS'] },
+  { username: 'SofiaAR', email: 'sofia@lowgim.com',   password: 'seed$pass', workouts: 17, streak: 0, targetVol: 15_287, level: 6,  xp: 2140, cats: ['UPPER','LEGS'] },
 ];
 
 // ─── main ─────────────────────────────────────────────────────────────────────
@@ -170,7 +170,7 @@ async function seed() {
   await Promise.all([Gym.deleteMany({}), User.deleteMany({}), Workout.deleteMany({})]);
   console.log('🧹 Colecciones limpiadas\n');
 
-  const gym   = await Gym.create({ name: 'IronHub Center', location: 'Madrid', qrCode: 'ironhub-madrid' });
+  const gym   = await Gym.create({ name: 'Lowgim', location: 'Madrid', qrCode: 'lowgim' });
   const gymId = (gym._id as Types.ObjectId).toString();
   console.log(`🏋️  Gimnasio: ${gym.name} (${gymId})\n`);
 

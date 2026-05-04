@@ -29,7 +29,10 @@ export const gymClient = {
 
 export const userClient = {
     getById: (id: string) => request<User>('GET', `/users/${id}`),
-    create: (user: Omit<User, 'id'>) => request<User>('POST', '/users', user),
+    login: (username: string, password: string) =>
+        request<User>('GET', `/users?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`),
+    create: (data: { username: string; email: string; gymId: string; password: string }) =>
+        request<User>('POST', '/users', data),
 };
 
 export const workoutClient = {
