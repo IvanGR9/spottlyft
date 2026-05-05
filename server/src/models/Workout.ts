@@ -15,6 +15,7 @@ const ExerciseEntrySchema = new Schema({
 const WorkoutSchema = new Schema({
   userId:      { type: Schema.Types.ObjectId, ref: 'User', required: true },
   gymId:       { type: String, required: true },
+  title:       { type: String },
   date:        { type: Date, required: true },
   duration:    { type: Number },
   exercises:   { type: [ExerciseEntrySchema], default: [] },

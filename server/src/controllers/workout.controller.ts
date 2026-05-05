@@ -1,8 +1,18 @@
 import { type Request, type Response } from 'express';
-import { getAllWorkouts, addWorkout, removeWorkout } from '../services/workout.service.js';
+import { getAllWorkouts, addWorkout, removeWorkout, getWorkoutsByUser, getWorkoutById } from '../services/workout.service.js';
 
 export async function getWorkouts(_req: Request, res: Response): Promise<void> {
   const workouts = await getAllWorkouts();
+  res.status(200).json({ success: true, data: workouts });
+}
+
+export async function getWorkoutsByUserHandler(req: Request, res: Response): Promise<void> {
+  const userId = req.query['userId'];
+  if (!userId || typeof userId !== 'string') {
+    res.status(400).json({ success: false, error: 'userId es obligatorio' });
+    return;
+  }
+  const workouts = await getWorkoutsByUser(userId);
   res.status(200).json({ success: true, data: workouts });
 }
 
@@ -20,6 +30,15 @@ export async function createWorkout(req: Request, res: Response): Promise<void> 
   } catch {
     res.status(500).json({ success: false, error: 'Error al crear el entrenamiento' });
   }
+}
+
+export async function getWorkoutByIdHandler(req: Request, res: Response): Promise<void> {
+  const workout = await getWorkoutById(String(req.params['id']));
+  if (!workout) {
+    res.status(404).json({ success: false, error: 'Entrenamiento no encontrado' });
+    return;
+  }
+  res.status(200).json({ success: true, data: workout });
 }
 
 export async function deleteWorkout(req: Request, res: Response): Promise<void> {

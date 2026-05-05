@@ -1,23 +1,26 @@
 import Workout from '../models/Workout.js';
 import type { LeaderboardEntry } from '../types/index.js';
 
+function toLocalDay(d: Date): number {
+  const local = new Date(d);
+  local.setHours(0, 0, 0, 0);
+  return local.getTime();
+}
+
 function calculateStreak(dates: Date[]): number {
   if (dates.length === 0) return 0;
 
-  const uniqueDays = [...new Set(
-    dates.map(d => new Date(d).toISOString().split('T')[0])
-  )].sort().reverse() as string[];
+  const uniqueDays = [...new Set(dates.map(d => toLocalDay(new Date(d))))]
+    .sort((a, b) => b - a);
 
-  const today = new Date().toISOString().split('T')[0]!;
-  const yesterday = new Date(Date.now() - 86_400_000).toISOString().split('T')[0]!;
+  const todayMs     = toLocalDay(new Date());
+  const yesterdayMs = todayMs - 86_400_000;
 
-  if (uniqueDays[0] !== today && uniqueDays[0] !== yesterday) return 0;
+  if (uniqueDays[0] !== todayMs && uniqueDays[0] !== yesterdayMs) return 0;
 
   let streak = 1;
   for (let i = 1; i < uniqueDays.length; i++) {
-    const diff =
-      (new Date(uniqueDays[i - 1]!).getTime() - new Date(uniqueDays[i]!).getTime()) / 86_400_000;
-    if (diff === 1) streak++;
+    if (uniqueDays[i - 1]! - uniqueDays[i]! === 86_400_000) streak++;
     else break;
   }
 

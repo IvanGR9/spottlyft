@@ -15,6 +15,14 @@ export async function addWorkout(data: {
   return Workout.create({ ...data, date: new Date(), totalVolume });
 }
 
+export async function getWorkoutsByUser(userId: string) {
+  return Workout.find({ userId }).sort({ date: -1 });
+}
+
+export async function getWorkoutById(id: string) {
+  return Workout.findById(id);
+}
+
 export async function removeWorkout(id: string): Promise<void> {
   const result = await Workout.findByIdAndDelete(id);
   if (!result) throw new Error('NOT_FOUND');

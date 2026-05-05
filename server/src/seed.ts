@@ -108,6 +108,58 @@ const ivanKg: Record<string, number> = {
   'Press Inclinado en Smith':  70,
 };
 
+interface RoutineDef {
+  title:     string;
+  duration:  number;
+  exercises: { name: string; sets: { kg: number; reps: number; rir: number }[] }[];
+}
+
+const ivanRoutines: RoutineDef[] = [
+  { title: 'UPPER 1', duration: 73, exercises: [
+    { name: 'Press Banca Inclinado Mancuerna', sets: [{ kg: 32, reps: 9, rir: 2 }, { kg: 34, reps: 7, rir: 1 }] },
+    { name: 'Remo en T',                       sets: [{ kg: 50, reps: 7, rir: 2 }, { kg: 52, reps: 6, rir: 1 }] },
+    { name: 'Press Hombros Smith',             sets: [{ kg: 40, reps: 6, rir: 2 }, { kg: 42, reps: 5, rir: 1 }] },
+    { name: 'Press Pecho Máquina',             sets: [{ kg: 70, reps: 10, rir: 2 }, { kg: 72, reps: 9, rir: 1 }] },
+    { name: 'Jalón al Pecho Cable',            sets: [{ kg: 55, reps: 9, rir: 2 }, { kg: 57, reps: 7, rir: 1 }] },
+    { name: 'Elevación Laterales Mancuerna',   sets: [{ kg: 14, reps: 11, rir: 2 }, { kg: 14, reps: 10, rir: 1 }] },
+    { name: 'Curl Bayesian',                   sets: [{ kg: 12, reps: 9, rir: 2 }, { kg: 12, reps: 9, rir: 1 }] },
+    { name: 'Tríceps Pressdown',               sets: [{ kg: 30, reps: 8, rir: 2 }, { kg: 32, reps: 8, rir: 1 }] },
+  ] },
+  { title: 'LOWER 2', duration: 60, exercises: [
+    { name: 'Aducción de Caderas',                sets: [{ kg: 60,  reps: 10, rir: 2 }, { kg: 62,  reps: 9,  rir: 1 }] },
+    { name: 'Extensiones de Cuads',               sets: [{ kg: 55,  reps: 10, rir: 2 }, { kg: 57,  reps: 10, rir: 1 }] },
+    { name: 'Sentadilla Belt Squat',              sets: [{ kg: 120, reps: 8,  rir: 2 }, { kg: 125, reps: 6,  rir: 1 }] },
+    { name: 'Curl de Piernas Acostado Máquina',   sets: [{ kg: 45,  reps: 10, rir: 2 }, { kg: 47,  reps: 9,  rir: 1 }] },
+    { name: 'Press de Piernas',                   sets: [{ kg: 240, reps: 8,  rir: 2 }, { kg: 240, reps: 7,  rir: 1 }, { kg: 220, reps: 7, rir: 0 }] },
+    { name: 'Press de Pantorrilla Máquina',       sets: [{ kg: 80,  reps: 10, rir: 2 }, { kg: 82,  reps: 9,  rir: 1 }] },
+  ] },
+  { title: 'PUSH 3',  duration: 46, exercises: [
+    { name: 'Aperturas Máquina',                       sets: [{ kg: 55, reps: 11, rir: 2 }, { kg: 57, reps: 10, rir: 1 }] },
+    { name: 'Elevaciones Laterales Polea Unilateral',  sets: [{ kg: 10, reps: 10, rir: 2 }, { kg: 10, reps: 9,  rir: 1 }] },
+    { name: 'Press Pecho Iso-Lateral Máquina',         sets: [{ kg: 65, reps: 9,  rir: 2 }, { kg: 67, reps: 7,  rir: 1 }] },
+    { name: 'Press Frances Polea',                     sets: [{ kg: 25, reps: 6,  rir: 2 }, { kg: 25, reps: 5,  rir: 1 }] },
+    { name: 'Vuelos Posteriores Máquina',              sets: [{ kg: 50, reps: 10, rir: 2 }, { kg: 52, reps: 9,  rir: 1 }] },
+    { name: 'Aperturas Inferior',                      sets: [{ kg: 45, reps: 9,  rir: 2 }, { kg: 47, reps: 8,  rir: 1 }] },
+    { name: 'Máquina para Fondos Sentado',             sets: [{ kg: 70, reps: 10, rir: 2 }, { kg: 72, reps: 9,  rir: 1 }] },
+  ] },
+  { title: 'PULL 4',  duration: 43, exercises: [
+    { name: 'Jalón al Pecho Polea',                sets: [{ kg: 75, reps: 9,  rir: 2 }, { kg: 78, reps: 7,  rir: 1 }] },
+    { name: 'Remo Unilateral Polea con Banco',      sets: [{ kg: 45, reps: 10, rir: 2 }, { kg: 47, reps: 9,  rir: 1 }] },
+    { name: 'Preacher Curl Machine',               sets: [{ kg: 35, reps: 9,  rir: 2 }, { kg: 37, reps: 8,  rir: 1 }] },
+    { name: 'Pull Over en Polea',                  sets: [{ kg: 30, reps: 7,  rir: 2 }, { kg: 30, reps: 6,  rir: 1 }] },
+    { name: 'Curl de Bíceps Mancuerna',            sets: [{ kg: 16, reps: 12, rir: 2 }, { kg: 18, reps: 10, rir: 1 }] },
+    { name: 'Curl Martillo Polea Unilateral',       sets: [{ kg: 12, reps: 7,  rir: 2 }, { kg: 12, reps: 6,  rir: 1 }] },
+  ] },
+  { title: 'LEGS 5',  duration: 81, exercises: [
+    { name: 'Curl de Pierna Sentado',         sets: [{ kg: 40, reps: 11, rir: 2 }, { kg: 42, reps: 10, rir: 1 }, { kg: 42, reps: 9, rir: 0 }] },
+    { name: 'Aducción de Caderas',            sets: [{ kg: 60, reps: 9,  rir: 2 }, { kg: 62, reps: 8,  rir: 1 }] },
+    { name: 'Peso Muerto Rumano Máquina',     sets: [{ kg: 80, reps: 6,  rir: 2 }, { kg: 82, reps: 5,  rir: 1 }] },
+    { name: 'Hiperextensión para Isquios',    sets: [{ kg: 20, reps: 10, rir: 2 }, { kg: 20, reps: 9,  rir: 1 }] },
+    { name: 'Extensiones a Una Pierna',       sets: [{ kg: 35, reps: 11, rir: 2 }, { kg: 37, reps: 11, rir: 1 }, { kg: 37, reps: 11, rir: 0 }] },
+    { name: 'Elevación de Gemelos Sentado',   sets: [{ kg: 50, reps: 13, rir: 2 }, { kg: 52, reps: 12, rir: 1 }] },
+  ] },
+];
+
 function buildExercises(category: string, kgOverrides?: Record<string, number>) {
   const pool = lib[category]!;
   return shuffle(pool).slice(0, ri(3, 5)).map(def => ({
@@ -141,14 +193,32 @@ async function seed() {
   console.log('✅ Conectado a MongoDB\n');
 
   // ── Fase 1: generar datos en memoria ─────────────────────────────────────
-  const payloads = profiles.map(p => ({
-    profile:   p,
-    dates:     generateDates(p.workouts, p.streak),
-    volumes:   distributeVolume(p.targetVol, p.workouts),
-    exercises: Array.from({ length: p.workouts }, (_, i) =>
-      buildExercises(p.cats[i % p.cats.length]!, p.username === 'IvanGR9' ? ivanKg : undefined),
-    ),
-  }));
+  const ivanRoutineVolumes = ivanRoutines.map(r =>
+    r.exercises.reduce((total, ex) =>
+      total + ex.sets.reduce((sum, s) => sum + s.kg * s.reps, 0), 0),
+  );
+
+  const payloads = profiles.map(p => {
+    const isIvan = p.username === 'IvanGR9';
+    return {
+      profile: p,
+      dates:     generateDates(p.workouts, p.streak),
+      volumes:   isIvan
+        ? Array.from({ length: p.workouts }, (_, i) => ivanRoutineVolumes[i % ivanRoutines.length]!)
+        : distributeVolume(p.targetVol, p.workouts),
+      exercises: Array.from({ length: p.workouts }, (_, i) =>
+        isIvan
+          ? ivanRoutines[i % ivanRoutines.length]!.exercises
+          : buildExercises(p.cats[i % p.cats.length]!),
+      ),
+      titles:    isIvan
+        ? Array.from({ length: p.workouts }, (_, i) => ivanRoutines[i % ivanRoutines.length]!.title)
+        : undefined,
+      durations: isIvan
+        ? Array.from({ length: p.workouts }, (_, i) => ivanRoutines[i % ivanRoutines.length]!.duration)
+        : undefined,
+    };
+  });
 
   // ── Fase 2: preview ───────────────────────────────────────────────────────
   console.log('📊 RESUMEN DE VOLÚMENES (preview — aún no escrito en DB)\n');
@@ -174,7 +244,7 @@ async function seed() {
   const gymId = (gym._id as Types.ObjectId).toString();
   console.log(`🏋️  Gimnasio: ${gym.name} (${gymId})\n`);
 
-  for (const { profile, dates, volumes, exercises } of payloads) {
+  for (const { profile, dates, volumes, exercises, titles, durations } of payloads) {
     const user = await User.create({
       username: profile.username,
       email:    profile.email,
@@ -189,8 +259,9 @@ async function seed() {
       dates.map((date, i) => ({
         userId:      user._id as Types.ObjectId,
         gymId,
+        ...(titles?.[i] ? { title: titles[i] } : {}),
         date,
-        duration:    ri(47, 97),
+        duration:    durations?.[i] ?? ri(47, 97),
         exercises:   exercises[i]!,
         totalVolume: volumes[i]!,
       })),

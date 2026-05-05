@@ -1,43 +1,25 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext.js';
+import { workoutClient, gymClient } from '../api/client.js';
+import type { Workout, LeaderboardEntry } from '../types/index.js';
 
-const stats = [
-  { label: 'Entrenamientos', value: '67', sub: 'Total' },
-  { label: 'Volumen total', value: '430K kg', sub: 'Acumulado' },
-  { label: 'Racha actual', value: '6 días', sub: 'Consecutivos' },
-];
-
-const ranking = [
-  { label: 'Volumen total', value: '#1' },
-  { label: 'Entrenamientos', value: '#1' },
-  { label: 'Racha de días', value: '#1' },
-];
-
-const recentActivity = [
-  { name: 'LEGS 5', sets: '8 series', weight: '5.748 kg', date: '25 abr, 18:31' },
-  { name: 'PULL 4', sets: '7 series', weight: '3.813 kg', date: '24 abr, 13:58' },
-  { name: 'PUSH 3', sets: '9 series', weight: '5.580 kg', date: '23 abr, 12:11' },
-];
-
-const gymTop3 = [
+const GUEST_TOP3 = [
   { name: 'IvanGR9', weight: '33.060 kg', kg: 33.060, medal: '🥇' },
   { name: 'CarlosF', weight: '28.450 kg', kg: 28.450, medal: '🥈' },
   { name: 'MartaLP', weight: '22.180 kg', kg: 22.180, medal: '🥉' },
 ];
 
-const gymStats = [
+const GUEST_STATS = [
   { value: '238+', label: 'miembros activos' },
   { value: '33K kg', label: 'levantados esta semana' },
   { value: '6 días', label: 'mejor racha activa' },
 ];
 
 function GuestHome({ navigate }: { navigate: (path: string) => void }) {
-  const maxKg = gymTop3[0].kg;
-
+  const maxKg = GUEST_TOP3[0].kg;
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center px-6 py-14 max-w-md mx-auto">
-
-      {/* Hero */}
       <div className="flex flex-col items-center text-center mb-10">
         <img src="/logo.png" className="w-20 h-20 mb-6" alt="SpottLyft logo" />
         <h1 className="text-3xl font-black text-white leading-tight mb-3">
@@ -46,11 +28,10 @@ function GuestHome({ navigate }: { navigate: (path: string) => void }) {
         <p className="text-[#71717a] text-base">Únete a SpottLyft y descúbrelo</p>
       </div>
 
-      {/* Ranking */}
       <div className="w-full bg-[#141414] border border-[#1c1c1c] rounded-2xl p-6 mb-4">
         <p className="text-white font-bold text-base mb-5">🏆 Ranking esta semana</p>
         <div className="flex flex-col gap-5">
-          {gymTop3.map((entry) => {
+          {GUEST_TOP3.map((entry) => {
             const pct = Math.round((entry.kg / maxKg) * 100);
             return (
               <div key={entry.name}>
@@ -62,10 +43,7 @@ function GuestHome({ navigate }: { navigate: (path: string) => void }) {
                   <p className="text-[#f97316] font-black text-lg">{entry.weight}</p>
                 </div>
                 <div className="w-full h-1.5 bg-[#1c1c1c] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#f97316] rounded-full"
-                    style={{ width: `${pct}%` }}
-                  />
+                  <div className="h-full bg-[#f97316] rounded-full" style={{ width: `${pct}%` }} />
                 </div>
               </div>
             );
@@ -73,10 +51,9 @@ function GuestHome({ navigate }: { navigate: (path: string) => void }) {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="w-full bg-[#141414] border border-[#1c1c1c] rounded-2xl p-6 mb-8">
         <div className="grid grid-cols-3 gap-2 text-center">
-          {gymStats.map((s) => (
+          {GUEST_STATS.map((s) => (
             <div key={s.label}>
               <p className="text-white font-black text-2xl">{s.value}</p>
               <p className="text-[#52525b] text-xs mt-1 leading-tight">{s.label}</p>
@@ -85,7 +62,6 @@ function GuestHome({ navigate }: { navigate: (path: string) => void }) {
         </div>
       </div>
 
-      {/* CTA */}
       <button
         onClick={() => navigate('/login')}
         className="w-full bg-[#f97316] hover:bg-[#ea6c0a] active:scale-95 text-white font-black py-4 rounded-2xl text-base transition-all mb-4"
@@ -94,41 +70,128 @@ function GuestHome({ navigate }: { navigate: (path: string) => void }) {
       </button>
       <p className="text-[#71717a] text-sm">
         ¿Ya tienes cuenta?{' '}
-        <span
-          className="text-[#f97316] cursor-pointer hover:underline"
-          onClick={() => navigate('/login')}
-        >
+        <span className="text-[#f97316] cursor-pointer hover:underline" onClick={() => navigate('/login')}>
           Inicia sesión
         </span>
       </p>
-
     </div>
   );
+}
+
+function formatVolume(kg: number): string {
+  if (kg >= 1000) return `${(kg / 1000).toFixed(1)}K kg`;
+  return `${kg} kg`;
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('es-ES', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function rankOf(list: LeaderboardEntry[], userId: string, key: keyof LeaderboardEntry): number {
+  return [...list]
+    .sort((a, b) => (b[key] as number) - (a[key] as number))
+    .findIndex(e => e.userId === userId) + 1;
 }
 
 export default function Home() {
   const { user } = useUser();
   const navigate = useNavigate();
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (user?.id === 'guest') {
-    return <GuestHome navigate={navigate} />;
+  useEffect(() => {
+    (async () => {
+      if (!user || user.id === 'guest') {
+        setLoading(false);
+        return;
+      }
+      try {
+        const [w, lb] = await Promise.all([
+          workoutClient.getByUser(user.id),
+          gymClient.getLeaderboard(user.gymId),
+        ]);
+        setWorkouts(w);
+        setLeaderboard(lb);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [user?.id, user?.gymId]);
+
+  if (user?.id === 'guest') return <GuestHome navigate={navigate} />;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-[#71717a]">Cargando...</p>
+      </div>
+    );
   }
+
+  const totalWorkouts = workouts.length;
+  const totalVolume = workouts.reduce((sum, w) => sum + (w.totalVolume ?? 0), 0);
+  const myEntry = leaderboard.find(e => e.userId === user?.id);
+  const streak = myEntry?.streak ?? 0;
+
+  if (totalWorkouts === 0) {
+    return (
+      <div className="px-6 py-8 max-w-4xl mx-auto">
+        <div className="mb-8">
+          <p className="text-[#71717a] text-sm mb-1">Resumen de tu progreso</p>
+          <h1 className="text-2xl font-bold text-white">Inicio ⚡</h1>
+        </div>
+        <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-10 flex flex-col items-center text-center gap-4">
+          <span className="text-5xl">🏋️</span>
+          <h2 className="text-white font-bold text-xl">¡Empieza tu primer entrenamiento!</h2>
+          <p className="text-[#71717a] text-sm max-w-xs">
+            Aún no tienes entrenamientos registrados. Empieza hoy y construye tu racha.
+          </p>
+          <button
+            onClick={() => navigate('/workout')}
+            className="mt-2 bg-[#f97316] hover:bg-[#ea6c0a] text-white font-bold py-3 px-8 rounded-2xl text-sm transition-colors"
+          >
+            + Iniciar entrenamiento
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = [
+    { label: 'Entrenamientos', value: String(totalWorkouts) },
+    { label: 'Volumen total', value: formatVolume(totalVolume) },
+    { label: 'Racha actual', value: `${streak} días` },
+  ];
+
+  const ranking = [
+    { label: 'Volumen total', value: rankOf(leaderboard, user!.id, 'totalVolume') },
+    { label: 'Entrenamientos', value: rankOf(leaderboard, user!.id, 'totalWorkouts') },
+    { label: 'Racha de días', value: rankOf(leaderboard, user!.id, 'streak') },
+  ].map(r => ({ ...r, value: r.value > 0 ? `#${r.value}` : '-' }));
+
+  const recentActivity = workouts.slice(0, 3).map(w => ({
+    id: w.id,
+    title: w.title ?? w.exercises[0]?.name ?? 'Entrenamiento',
+    date: formatDate(w.date),
+    duration: w.duration ? `${w.duration} min` : null,
+    volume: formatVolume(w.totalVolume),
+  }));
 
   return (
     <div className="px-6 py-8 max-w-4xl mx-auto">
-
-      {/* Cabecera */}
       <div className="mb-8">
         <p className="text-[#71717a] text-sm mb-1">Resumen de tu progreso esta semana</p>
         <h1 className="text-2xl font-bold text-white">Inicio ⚡</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* Columna izquierda */}
         <div className="flex flex-col gap-4">
-
-          {/* Stats */}
+          {/* Estadísticas */}
           <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5">
             <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-4">Estadísticas</p>
             <div className="grid grid-cols-3 gap-3">
@@ -145,13 +208,13 @@ export default function Home() {
           <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5">
             <div className="flex items-center justify-between mb-3">
               <p className="text-white font-semibold text-sm">Racha actual</p>
-              <span className="text-[#f97316] font-bold text-sm">🔥 6 días</span>
+              <span className="text-[#f97316] font-bold text-sm">🔥 {streak} días</span>
             </div>
             <div className="flex gap-1.5">
               {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => (
                 <div key={day} className="flex flex-col items-center gap-1 flex-1">
-                  <div className={`w-full h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i < 6 ? 'bg-[#f97316] text-white' : 'bg-[#1c1c1c] text-[#52525b]'}`}>
-                    ✓
+                  <div className={`w-full h-7 rounded-lg flex items-center justify-center text-xs font-bold ${i < streak ? 'bg-[#f97316] text-white' : 'bg-[#1c1c1c] text-[#52525b]'}`}>
+                    {i < streak ? '✓' : '·'}
                   </div>
                   <span className="text-[#52525b] text-xs">{day}</span>
                 </div>
@@ -162,24 +225,30 @@ export default function Home() {
           {/* Actividad reciente */}
           <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5">
             <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-4">Actividad reciente</p>
-            <div className="flex flex-col gap-3">
-              {recentActivity.map((a, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white text-sm font-semibold">{a.name}</p>
-                    <p className="text-[#52525b] text-xs mt-0.5">{a.sets} · {a.date}</p>
+            <div className="flex flex-col gap-1">
+              {recentActivity.map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => navigate(`/workout/${a.id}`)}
+                  className="flex items-center justify-between gap-3 w-full text-left px-3 py-2.5 rounded-xl hover:bg-[#1c1c1c] transition-colors group"
+                >
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-semibold truncate">{a.title}</p>
+                    <p className="text-[#52525b] text-xs mt-0.5">
+                      {a.date}{a.duration ? ` · ${a.duration}` : ''}
+                    </p>
                   </div>
-                  <p className="text-[#f97316] text-sm font-bold">{a.weight}</p>
-                </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <p className="text-[#f97316] text-sm font-bold">{a.volume}</p>
+                    <span className="text-[#52525b] group-hover:text-[#f97316] transition-colors text-xs">›</span>
+                  </div>
+                </button>
               ))}
             </div>
           </div>
-
         </div>
 
-        {/* Columna derecha */}
         <div className="flex flex-col gap-4">
-
           {/* Tu posición */}
           <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5">
             <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-4">Tu posición</p>
@@ -198,13 +267,13 @@ export default function Home() {
 
           {/* Botón entrenar */}
           <button
-            onClick={() => navigate(user?.id === 'guest' ? '/login' : '/workout')}
+            onClick={() => navigate('/workout')}
             className="w-full bg-[#f97316] hover:bg-[#ea6c0a] text-white font-bold py-4 rounded-2xl text-base transition-colors"
           >
-            {user?.id === 'guest' ? 'Únete para entrenar' : '+ Iniciar entrenamiento'}
+            + Iniciar entrenamiento
           </button>
 
-          {/* Bienvenida */}
+          {/* Perfil */}
           <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-[#f97316] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
@@ -212,11 +281,10 @@ export default function Home() {
               </div>
               <div>
                 <p className="text-white font-bold">{user?.username}</p>
-                <p className="text-[#52525b] text-xs mt-0.5">Gimnasio Local · {user?.id === 'guest' ? 'Invitado' : 'Miembro'}</p>
+                <p className="text-[#52525b] text-xs mt-0.5">Miembro</p>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>

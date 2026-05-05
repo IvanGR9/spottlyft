@@ -10,6 +10,7 @@ export interface User {
     username: string;
     email: string;
     gymId: string;
+    streak?: number;
     avatarUrl?: string;
 }
 
@@ -27,11 +28,25 @@ export interface Set {
     rir?: number;
 }
 
+export interface WorkoutSet {
+    kg?: number;
+    reps?: number;
+    rir?: number;
+}
+
+export interface WorkoutExercise {
+    exerciseId?: string;
+    name?: string;
+    sets: WorkoutSet[];
+}
+
 export interface Workout {
     id: string;
     userId: string;
     gymId: string;
-    exercises: Exercise[];
+    title?: string;
+    duration?: number;
+    exercises: WorkoutExercise[];
     date: string;
     totalVolume: number;
 }

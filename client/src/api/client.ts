@@ -37,6 +37,8 @@ export const userClient = {
 
 export const workoutClient = {
     getAll: () => request<Workout[]>('GET', '/workouts'),
+    getByUser: (userId: string) => request<Workout[]>('GET', `/workouts/user?userId=${userId}`),
+    getById: (id: string) => request<Workout>('GET', `/workouts/${id}`),
     create: (workout: Omit<Workout, 'id'>) => request<Workout>('POST', '/workouts', workout),
     delete: (id: string) => request<void>('DELETE', `/workouts/${id}`),
 };
