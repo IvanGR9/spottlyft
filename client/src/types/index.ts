@@ -51,6 +51,21 @@ export interface Workout {
     totalVolume: number;
 }
 
+export interface RoutineExercise {
+    name: string;
+    muscleGroup?: string;
+    type?: string;
+    sets: WorkoutSet[];
+}
+
+export interface Routine {
+    id: string;
+    userId: string;
+    gymId: string;
+    name: string;
+    exercises: RoutineExercise[];
+}
+
 export interface LeaderboardEntry {
     userId: string;
     username: string;

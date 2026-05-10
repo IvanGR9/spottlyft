@@ -29,7 +29,7 @@ export default function Navbar() {
           }>
             <span className="text-lg">🏠</span> Inicio
           </NavLink>
-          <NavLink to="/workout" className={({ isActive }) =>
+          <NavLink to="/routines" className={({ isActive }) =>
             `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${isActive ? 'bg-[#f97316] text-white' : 'text-[#71717a] hover:text-white hover:bg-[#1c1c1c]'}`
           }>
             <span className="text-lg">💪</span> Entrenar
@@ -74,7 +74,7 @@ export default function Navbar() {
           <span className="text-xl">🏠</span>
           <span>Inicio</span>
         </NavLink>
-        <NavLink to="/workout" className={({ isActive }) =>
+        <NavLink to="/routines" className={({ isActive }) =>
           `flex flex-col items-center gap-1 text-xs transition-colors ${isActive ? 'text-[#f97316]' : 'text-[#52525b]'}`
         }>
           <span className="text-xl">💪</span>

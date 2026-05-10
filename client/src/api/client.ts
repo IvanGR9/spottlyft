@@ -1,4 +1,4 @@
-import type { ApiResponse, Workout, LeaderboardEntry, User, Gym } from '../types/index.js';
+import type { ApiResponse, Workout, LeaderboardEntry, User, Gym, Routine } from '../types/index.js';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 
     (['localhost', '127.0.0.1'].includes(window.location.hostname)
@@ -33,6 +33,12 @@ export const userClient = {
         request<User>('GET', `/users?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`),
     create: (data: { username: string; email: string; gymId: string; password: string }) =>
         request<User>('POST', '/users', data),
+};
+
+export const routineClient = {
+    getByUser: (userId: string) => request<Routine[]>('GET', `/routines?userId=${userId}`),
+    create: (routine: object) => request<Routine>('POST', '/routines', routine),
+    delete: (id: string) => request<void>('DELETE', `/routines/${id}`),
 };
 
 export const workoutClient = {

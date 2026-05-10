@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useWorkout } from '../hooks/useWorkout.js';
 import { useUser } from '../context/UserContext.js';
+import { workoutClient } from '../api/client.js';
+import type { Routine } from '../types/index.js';
 
 const exerciseSuggestions = [
   { name: 'Press de Pecho en Máquina',        muscle: 'Pecho',       type: 'Compuesto' },
@@ -18,17 +20,40 @@ const exerciseSuggestions = [
   { name: 'Curl Predicador en Máquina',        muscle: 'Bíceps',      type: 'Aislado'   },
 ];
 
+function routineToInitial(routine: Routine) {
+  return {
+    title: routine.name,
+    exercises: routine.exercises.map(ex => ({
+      id: crypto.randomUUID(),
+      name: ex.name,
+      muscleGroup: ex.muscleGroup ?? '',
+      type: ex.type,
+      sets: ex.sets.map(s => ({ reps: s.reps ?? 0, weight: s.kg ?? 0, rir: s.rir ?? 0 })),
+    })),
+  };
+}
+
 export default function Workout() {
-  const { workout, setTitle, addExercise, replaceExercise, addSet, updateSet, totalVolume, reset } = useWorkout();
+  const location = useLocation();
+  const preloaded = (location.state as { routine?: Routine } | null)?.routine;
+  const { workout, setTitle, addExercise, replaceExercise, addSet, updateSet, totalVolume, reset } = useWorkout(
+    preloaded ? routineToInitial(preloaded) : undefined
+  );
   const { user } = useUser();
   const navigate = useNavigate();
-  const [started, setStarted] = useState(false);
+  const [started, setStarted] = useState(!!preloaded);
   const [showExerciseList, setShowExerciseList] = useState(false);
   const [replacingExerciseId, setReplacingExerciseId] = useState<string | null>(null);
   const [doneSets, setDoneSets] = useState<Record<string, boolean>>({});
   const [elapsed, setElapsed] = useState(0);
   const [timerInterval, setTimerInterval] = useState<ReturnType<typeof setInterval> | null>(null);
   const [paused, setPaused] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+
+  useEffect(() => {
+    if (preloaded) startTimer();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function startTimer() {
     const interval = setInterval(() => setElapsed(e => e + 1), 1000);
@@ -66,8 +91,21 @@ export default function Workout() {
     startTimer();
   }
 
-  function handleFinish() {
+  async function handleFinish() {
     stopTimer();
+    try {
+      await workoutClient.create({
+        userId: user!.id,
+        gymId: user!.gymId,
+        title: workout.title,
+        date: new Date().toISOString(),
+        duration: Math.round(elapsed / 60),
+        exercises: workout.exercises,
+        totalVolume,
+      });
+    } catch {
+      setSaveError(true);
+    }
     reset();
     setStarted(false);
     setDoneSets({});
@@ -371,6 +409,13 @@ export default function Workout() {
           </div>
         );
       })()}
+
+      {/* Error al guardar */}
+      {saveError && (
+        <p className="text-red-400 text-xs text-center mb-3">
+          No se pudo guardar el entrenamiento. Inténtalo de nuevo.
+        </p>
+      )}
 
       {/* Finalizar */}
       <button

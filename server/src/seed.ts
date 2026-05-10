@@ -10,6 +10,7 @@ import mongoose, { Types } from 'mongoose';
 import Gym from './models/Gym.js';
 import User from './models/User.js';
 import Workout from './models/Workout.js';
+import Routine from './models/Routine.js';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -237,7 +238,7 @@ async function seed() {
   console.log();
 
   // ── Fase 3: escribir en DB ───────────────────────────────────────────────
-  await Promise.all([Gym.deleteMany({}), User.deleteMany({}), Workout.deleteMany({})]);
+  await Promise.all([Gym.deleteMany({}), User.deleteMany({}), Workout.deleteMany({}), Routine.deleteMany({})]);
   console.log('🧹 Colecciones limpiadas\n');
 
   const gym   = await Gym.create({ name: 'Lowgim', location: 'Madrid', qrCode: 'lowgim' });
@@ -266,6 +267,18 @@ async function seed() {
         totalVolume: volumes[i]!,
       })),
     );
+
+    if (profile.username === 'IvanGR9') {
+      await Routine.insertMany(
+        ivanRoutines.map(r => ({
+          userId: user._id as Types.ObjectId,
+          gymId,
+          name: r.title,
+          exercises: r.exercises.map(ex => ({ name: ex.name, sets: ex.sets })),
+        })),
+      );
+      console.log(`📋 ${profile.username.padEnd(10)} ${ivanRoutines.length} rutinas insertadas`);
+    }
 
     console.log(`✅ ${profile.username.padEnd(10)} ${profile.workouts} entrenamientos insertados`);
   }

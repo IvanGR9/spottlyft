@@ -6,11 +6,10 @@ interface WorkoutState {
     exercises: Exercise[];
 }
 
-export function useWorkout() {
-    const [workout, setWorkout] = useState<WorkoutState>({
-        title: '',
-        exercises: []
-    });
+export function useWorkout(initial?: WorkoutState) {
+    const [workout, setWorkout] = useState<WorkoutState>(
+        initial ?? { title: '', exercises: [] }
+    );
 
     const addExercise = useCallback((name: string, muscleGroup: string, type?: string) => {
         setWorkout(prev => ({
