@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useWorkout } from '../hooks/useWorkout.js';
 import { useUser } from '../context/UserContext.js';
-import { workoutClient } from '../api/client.js';
+import { workoutClient, routineClient } from '../api/client.js';
 import type { Routine } from '../types/index.js';
 
 const exerciseSuggestions = [
@@ -36,7 +36,7 @@ function routineToInitial(routine: Routine) {
 export default function Workout() {
   const location = useLocation();
   const preloaded = (location.state as { routine?: Routine } | null)?.routine;
-  const { workout, setTitle, addExercise, replaceExercise, addSet, updateSet, totalVolume, reset } = useWorkout(
+  const { workout, setTitle, addExercise, replaceExercise, addSet, updateSet, totalVolume, reset, loadInitial } = useWorkout(
     preloaded ? routineToInitial(preloaded) : undefined
   );
   const { user } = useUser();
@@ -49,6 +49,12 @@ export default function Workout() {
   const [timerInterval, setTimerInterval] = useState<ReturnType<typeof setInterval> | null>(null);
   const [paused, setPaused] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [userRoutines, setUserRoutines] = useState<Routine[]>([]);
+
+  useEffect(() => {
+    if (!user || user.id === 'guest') return;
+    routineClient.getByUser(user.id).then(setUserRoutines).catch(() => {});
+  }, [user?.id]);
 
   useEffect(() => {
     if (preloaded) startTimer();
@@ -87,6 +93,14 @@ export default function Workout() {
 
   function handleStart() {
     if (!workout.title.trim()) return;
+    setStarted(true);
+    startTimer();
+  }
+
+  function startWithRoutine(routine: Routine) {
+    loadInitial(routineToInitial(routine));
+    setDoneSets({});
+    setElapsed(0);
     setStarted(true);
     startTimer();
   }
@@ -183,26 +197,24 @@ export default function Workout() {
           />
         </div>
 
-        {/* Rutinas recientes */}
-        <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-6 mb-4">
-          <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-4">Rutinas recientes</p>
-          <div className="grid grid-cols-2 gap-2">
-            {['PUSH 4', 'PULL 4', 'LEGS 5', 'UPPER 1'].map(r => (
-              <button
-                key={r}
-                onClick={() => setTitle(r)}
-                className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-colors text-sm font-semibold ${
-                  workout.title === r
-                    ? 'bg-[#f97316]/10 border-[#f97316]/40 text-[#f97316]'
-                    : 'bg-[#1c1c1c] border-[#2a2a2a] text-white hover:bg-[#2a2a2a]'
-                }`}
-              >
-                <span>{r}</span>
-                <span className="text-xs opacity-40">→</span>
-              </button>
-            ))}
+        {/* Rutinas del usuario */}
+        {userRoutines.length > 0 && (
+          <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-6 mb-4">
+            <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-4">Tus rutinas</p>
+            <div className="grid grid-cols-2 gap-2">
+              {userRoutines.map(r => (
+                <button
+                  key={r.id}
+                  onClick={() => startWithRoutine(r)}
+                  className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#2a2a2a] bg-[#1c1c1c] text-white hover:bg-[#f97316]/10 hover:border-[#f97316]/40 hover:text-[#f97316] transition-colors text-sm font-semibold"
+                >
+                  <span className="truncate mr-2">{r.name}</span>
+                  <span className="text-xs opacity-40 shrink-0">→</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Botón iniciar */}
         <button

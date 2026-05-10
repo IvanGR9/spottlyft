@@ -73,6 +73,10 @@ export function useWorkout(initial?: WorkoutState) {
         setWorkout({ title: '', exercises: [] });
     }, []);
 
+    const loadInitial = useCallback((state: WorkoutState) => {
+        setWorkout(state);
+    }, []);
+
     return {
         workout,
         setTitle: (title: string) => setWorkout(prev => ({ ...prev, title })),
@@ -81,6 +85,7 @@ export function useWorkout(initial?: WorkoutState) {
         addSet,
         updateSet,
         totalVolume,
-        reset
+        reset,
+        loadInitial,
     };
 }

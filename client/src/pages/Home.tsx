@@ -96,7 +96,7 @@ function rankOf(list: LeaderboardEntry[], userId: string, key: keyof Leaderboard
 }
 
 export default function Home() {
-  const { user } = useUser();
+  const { user, gym } = useUser();
   const navigate = useNavigate();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -139,25 +139,92 @@ export default function Home() {
   const streak = myEntry?.streak ?? 0;
 
   if (totalWorkouts === 0) {
+    const gymName = gym?.name ?? 'tu gimnasio';
+    const medals = ['🥇', '🥈', '🥉'];
+    const top3 = [...leaderboard]
+      .sort((a, b) => b.totalVolume - a.totalVolume)
+      .slice(0, 3);
+    const maxVol = top3[0]?.totalVolume ?? 1;
+
     return (
-      <div className="px-6 py-8 max-w-4xl mx-auto">
+      <div className="px-6 py-8 max-w-2xl mx-auto">
+
+        {/* Cabecera */}
         <div className="mb-8">
-          <p className="text-[#71717a] text-sm mb-1">Resumen de tu progreso</p>
-          <h1 className="text-2xl font-bold text-white">Inicio ⚡</h1>
+          <p className="text-[#71717a] text-sm mb-1">Bienvenido a SpottLyft</p>
+          <h1 className="text-2xl font-bold text-white">¡Hola, {user?.username}! 👋</h1>
+          <p className="text-[#52525b] text-sm mt-1">Tu historia empieza hoy. No hay excusas.</p>
         </div>
-        <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-10 flex flex-col items-center text-center gap-4">
-          <span className="text-5xl">🏋️</span>
-          <h2 className="text-white font-bold text-xl">¡Empieza tu primer entrenamiento!</h2>
-          <p className="text-[#71717a] text-sm max-w-xs">
-            Aún no tienes entrenamientos registrados. Empieza hoy y construye tu racha.
+
+        {/* Hero */}
+        <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-7 mb-4 relative overflow-hidden">
+          <p className="text-[#f97316] text-xs font-bold uppercase tracking-widest mb-3">Tu reto</p>
+          <h2 className="text-white font-black text-2xl leading-tight mb-2">
+            ¿Eres el más fuerte<br />de {gymName}?
+          </h2>
+          <p className="text-[#71717a] text-sm mb-6">
+            Hay gente levantando kilos ahora mismo. Cada día que no entrenas, alguien te supera.
           </p>
           <button
-            onClick={() => navigate('/workout')}
-            className="mt-2 bg-[#f97316] hover:bg-[#ea6c0a] text-white font-bold py-3 px-8 rounded-2xl text-sm transition-colors"
+            onClick={() => navigate('/routines')}
+            className="bg-[#f97316] hover:bg-[#ea6c0a] active:scale-95 text-white font-bold py-3 px-7 rounded-xl text-sm transition-all"
           >
-            + Iniciar entrenamiento
+            Empezar ahora →
           </button>
         </div>
+
+        {/* Preview ranking */}
+        <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5 mb-4">
+          <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-4">
+            Así está {gymName} ahora mismo
+          </p>
+          {top3.length === 0 ? (
+            <p className="text-[#52525b] text-sm">Sin datos de ranking todavía.</p>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {top3.map((entry, i) => {
+                const pct = Math.round((entry.totalVolume / maxVol) * 100);
+                return (
+                  <div key={entry.userId}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl">{medals[i]}</span>
+                        <p className="text-white font-semibold text-sm">{entry.username}</p>
+                      </div>
+                      <p className="text-[#f97316] font-bold text-sm">{formatVolume(entry.totalVolume)}</p>
+                    </div>
+                    <div className="w-full h-1.5 bg-[#1c1c1c] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#f97316] rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <button
+            onClick={() => navigate('/leaderboard')}
+            className="mt-4 text-[#71717a] hover:text-white text-xs transition-colors"
+          >
+            Ver ranking completo →
+          </button>
+        </div>
+
+        {/* CTA rutinas */}
+        <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-white font-bold text-sm mb-1">Crea tu primera rutina</p>
+            <p className="text-[#71717a] text-xs">
+              Elige ejercicios, define series y empieza a registrar tu progreso.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/routines')}
+            className="shrink-0 border border-[#f97316]/50 text-[#f97316] hover:bg-[#f97316]/10 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors"
+          >
+            Crear
+          </button>
+        </div>
+
       </div>
     );
   }

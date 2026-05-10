@@ -32,15 +32,15 @@ function daysAgo(n: number): Date {
  * irregulares. La suma es exactamente targetTotal (ajuste en el último slot).
  */
 function distributeVolume(targetTotal: number, count: number): number[] {
-  const avg = targetTotal / count;
+  const actual = Math.round(targetTotal * r(0.92, 1.08) + ri(1, 999));
+  const avg = actual / count;
   const raw = Array.from({ length: count }, () =>
     avg * r(0.85, 1.15) + ri(-9, 9) * 0.1 + ri(-9, 9) * 0.01,
   );
-  const scale = targetTotal / raw.reduce((s, v) => s + v, 0);
+  const scale = actual / raw.reduce((s, v) => s + v, 0);
   const scaled = raw.map(v => Math.round(v * scale * 100) / 100);
 
-  // Ajustar último elemento para compensar el error de redondeo
-  const diff = Math.round((targetTotal - scaled.reduce((s, v) => s + v, 0)) * 100) / 100;
+  const diff = Math.round((actual - scaled.reduce((s, v) => s + v, 0)) * 100) / 100;
   scaled[scaled.length - 1]! += diff;
 
   return shuffle(scaled);
@@ -67,38 +67,47 @@ interface ExDef { name: string; muscle: string; kg: number; minReps: number; max
 const lib: Record<string, ExDef[]> = {
   PUSH: [
     { name: 'Press de Pecho en Máquina',       muscle: 'Pecho',   kg: 68, minReps: 8,  maxReps: 12 },
-    { name: 'Press Inclinado en Smith',         muscle: 'Pecho',   kg: 70, minReps: 6,  maxReps: 10 },
-    { name: 'Aperturas en Máquina',             muscle: 'Pecho',   kg: 45, minReps: 10, maxReps: 15 },
-    { name: 'Extensiones de Tríceps en Polea',  muscle: 'Tríceps', kg: 32, minReps: 10, maxReps: 15 },
-    { name: 'Press Militar en Smith',           muscle: 'Hombro',  kg: 52, minReps: 8,  maxReps: 12 },
-    { name: 'Elevaciones Laterales',            muscle: 'Hombro',  kg: 20, minReps: 12, maxReps: 20 },
-    { name: 'Fondos con Lastre',                muscle: 'Pecho',   kg: 25, minReps: 8,  maxReps: 12 },
+    { name: 'Press Inclinado en Smith',         muscle: 'Pecho',   kg: 68, minReps: 6,  maxReps: 10 },
+    { name: 'Aperturas en Máquina',             muscle: 'Pecho',   kg: 55, minReps: 10, maxReps: 14 },
+    { name: 'Extensiones de Tríceps en Polea',  muscle: 'Tríceps', kg: 30, minReps: 10, maxReps: 15 },
+    { name: 'Press Militar en Smith',           muscle: 'Hombro',  kg: 50, minReps: 8,  maxReps: 12 },
+    { name: 'Elevaciones Laterales',            muscle: 'Hombro',  kg: 16, minReps: 12, maxReps: 20 },
+    { name: 'Fondos con Lastre',                muscle: 'Pecho',   kg: 35, minReps: 8,  maxReps: 12 },
   ],
   PULL: [
-    { name: 'Jalón al Pecho en Polea',          muscle: 'Espalda', kg: 75, minReps: 8,  maxReps: 12 },
-    { name: 'Remo en Polea Baja',               muscle: 'Espalda', kg: 65, minReps: 8,  maxReps: 12 },
-    { name: 'Remo con Barra',                   muscle: 'Espalda', kg: 72, minReps: 6,  maxReps: 10 },
-    { name: 'Curl de Bíceps con Mancuerna',     muscle: 'Bíceps',  kg: 20, minReps: 10, maxReps: 14 },
-    { name: 'Curl Predicador en Máquina',       muscle: 'Bíceps',  kg: 40, minReps: 10, maxReps: 15 },
-    { name: 'Face Pull en Polea',               muscle: 'Hombro',  kg: 25, minReps: 15, maxReps: 20 },
+    { name: 'Jalón al Pecho en Polea',          muscle: 'Espalda', kg: 76, minReps: 8,  maxReps: 12 },
+    { name: 'Remo en Polea Baja',               muscle: 'Espalda', kg: 55, minReps: 8,  maxReps: 12 },
+    { name: 'Remo con Barra',                   muscle: 'Espalda', kg: 65, minReps: 6,  maxReps: 10 },
+    { name: 'Curl de Bíceps con Mancuerna',     muscle: 'Bíceps',  kg: 18, minReps: 10, maxReps: 14 },
+    { name: 'Curl Predicador en Máquina',       muscle: 'Bíceps',  kg: 38, minReps: 10, maxReps: 14 },
+    { name: 'Face Pull en Polea',               muscle: 'Hombro',  kg: 22, minReps: 15, maxReps: 20 },
     { name: 'Dominadas con Lastre',             muscle: 'Espalda', kg: 20, minReps: 6,  maxReps: 9  },
   ],
   LEGS: [
-    { name: 'Prensa de Piernas',                muscle: 'Cuádriceps', kg: 70, minReps: 8,  maxReps: 12 },
-    { name: 'Sentadilla Belt Squat',            muscle: 'Cuádriceps', kg: 65, minReps: 8,  maxReps: 10 },
-    { name: 'Curl Femoral Sentado',             muscle: 'Isquios',    kg: 52, minReps: 10, maxReps: 15 },
-    { name: 'Extensión de Cuádriceps',          muscle: 'Cuádriceps', kg: 48, minReps: 12, maxReps: 15 },
-    { name: 'Peso Muerto Rumano',               muscle: 'Isquios',    kg: 65, minReps: 8,  maxReps: 12 },
-    { name: 'Elevaciones de Talones',           muscle: 'Gemelos',    kg: 42, minReps: 15, maxReps: 20 },
-    { name: 'Hip Thrust en Máquina',            muscle: 'Glúteos',    kg: 60, minReps: 10, maxReps: 14 },
+    { name: 'Prensa de Piernas',                muscle: 'Cuádriceps', kg: 180, minReps: 8,  maxReps: 12 },
+    { name: 'Sentadilla Belt Squat',            muscle: 'Cuádriceps', kg: 100, minReps: 8,  maxReps: 10 },
+    { name: 'Curl Femoral Sentado',             muscle: 'Isquios',    kg:  45, minReps: 10, maxReps: 14 },
+    { name: 'Extensión de Cuádriceps',          muscle: 'Cuádriceps', kg:  55, minReps: 12, maxReps: 15 },
+    { name: 'Peso Muerto Rumano',               muscle: 'Isquios',    kg:  72, minReps: 8,  maxReps: 12 },
+    { name: 'Elevaciones de Talones',           muscle: 'Gemelos',    kg:  50, minReps: 15, maxReps: 20 },
+    { name: 'Hip Thrust en Máquina',            muscle: 'Glúteos',    kg:  80, minReps: 10, maxReps: 14 },
+  ],
+  LOWER: [
+    { name: 'Prensa de Piernas',                muscle: 'Cuádriceps', kg: 180, minReps: 8,  maxReps: 12 },
+    { name: 'Curl Femoral Sentado',             muscle: 'Isquios',    kg:  45, minReps: 10, maxReps: 14 },
+    { name: 'Peso Muerto Rumano',               muscle: 'Isquios',    kg:  72, minReps: 8,  maxReps: 12 },
+    { name: 'Extensión de Cuádriceps',          muscle: 'Cuádriceps', kg:  55, minReps: 12, maxReps: 15 },
+    { name: 'Hip Thrust en Máquina',            muscle: 'Glúteos',    kg:  80, minReps: 10, maxReps: 14 },
+    { name: 'Elevaciones de Talones',           muscle: 'Gemelos',    kg:  50, minReps: 15, maxReps: 20 },
+    { name: 'Aducción de Cadera',               muscle: 'Glúteos',    kg:  60, minReps: 12, maxReps: 15 },
   ],
   UPPER: [
     { name: 'Press de Pecho en Máquina',        muscle: 'Pecho',   kg: 65, minReps: 8,  maxReps: 12 },
-    { name: 'Jalón al Pecho en Polea',          muscle: 'Espalda', kg: 70, minReps: 8,  maxReps: 12 },
-    { name: 'Press Militar en Smith',           muscle: 'Hombro',  kg: 48, minReps: 8,  maxReps: 12 },
-    { name: 'Remo con Mancuerna',               muscle: 'Espalda', kg: 35, minReps: 10, maxReps: 14 },
-    { name: 'Curl de Bíceps con Barra',         muscle: 'Bíceps',  kg: 33, minReps: 10, maxReps: 15 },
-    { name: 'Extensiones de Tríceps en Polea',  muscle: 'Tríceps', kg: 28, minReps: 12, maxReps: 15 },
+    { name: 'Jalón al Pecho en Polea',          muscle: 'Espalda', kg: 72, minReps: 8,  maxReps: 12 },
+    { name: 'Press Militar en Smith',           muscle: 'Hombro',  kg: 47, minReps: 8,  maxReps: 12 },
+    { name: 'Remo con Mancuerna',               muscle: 'Espalda', kg: 40, minReps: 10, maxReps: 14 },
+    { name: 'Curl de Bíceps con Barra',         muscle: 'Bíceps',  kg: 32, minReps: 10, maxReps: 15 },
+    { name: 'Extensiones de Tríceps en Polea',  muscle: 'Tríceps', kg: 30, minReps: 12, maxReps: 15 },
   ],
 };
 
@@ -177,14 +186,14 @@ function buildExercises(category: string, kgOverrides?: Record<string, number>) 
 // ─── perfiles ─────────────────────────────────────────────────────────────────
 
 const profiles = [
-  { username: 'IvanGR9', email: 'ivan@lowgim.com',   password: 'Lukegr01',  workouts: 67, streak: 6, targetVol: 60_121, level: 18, xp: 9840, cats: ['PUSH','PULL','LEGS'] },
-  { username: 'CarlosF', email: 'carlos@lowgim.com',  password: 'seed$pass', workouts: 45, streak: 3, targetVol: 40_489, level: 14, xp: 7230, cats: ['PUSH','PULL','LEGS','UPPER'] },
-  { username: 'MartaLP', email: 'marta@lowgim.com',   password: 'seed$pass', workouts: 38, streak: 5, targetVol: 34_178, level: 11, xp: 5870, cats: ['UPPER','LEGS','PULL'] },
-  { username: 'PabloMR', email: 'pablo@lowgim.com',   password: 'seed$pass', workouts: 28, streak: 1, targetVol: 25_163, level: 9,  xp: 3940, cats: ['PUSH','PULL','LEGS'] },
-  { username: 'DiegoVM', email: 'diego@lowgim.com',   password: 'seed$pass', workouts: 31, streak: 4, targetVol: 27_847, level: 10, xp: 4610, cats: ['PUSH','PULL','LEGS','UPPER'] },
-  { username: 'LauraS',  email: 'laura@lowgim.com',   password: 'seed$pass', workouts: 22, streak: 2, targetVol: 19_834, level: 7,  xp: 2780, cats: ['UPPER','LEGS'] },
-  { username: 'AlexTG',  email: 'alex@lowgim.com',    password: 'seed$pass', workouts: 24, streak: 1, targetVol: 21_573, level: 8,  xp: 3370, cats: ['PUSH','PULL','LEGS'] },
-  { username: 'SofiaAR', email: 'sofia@lowgim.com',   password: 'seed$pass', workouts: 17, streak: 0, targetVol: 15_287, level: 6,  xp: 2140, cats: ['UPPER','LEGS'] },
+  { username: 'IvanGR9', email: 'ivan@lowgim.com',   password: 'Lukegr01',  workouts: 67, streak: 6, targetVol: 430_000, level: 18, xp: 9840, cats: ['PUSH','PULL','LEGS'],                    avatar: '' },
+  { username: 'CarlosF', email: 'carlos@lowgim.com',  password: 'seed$pass', workouts: 45, streak: 3, targetVol: 380_000, level: 14, xp: 7230, cats: ['PUSH','PULL','LEGS','UPPER','LOWER'],   avatar: 'https://randomuser.me/api/portraits/men/45.jpg' },
+  { username: 'MartaLP', email: 'marta@lowgim.com',   password: 'seed$pass', workouts: 38, streak: 5, targetVol: 310_000, level: 11, xp: 5870, cats: ['UPPER','LOWER','UPPER','LOWER'],        avatar: 'https://randomuser.me/api/portraits/women/28.jpg' },
+  { username: 'DiegoVM', email: 'diego@lowgim.com',   password: 'seed$pass', workouts: 31, streak: 4, targetVol: 270_000, level: 10, xp: 4610, cats: ['PUSH','PULL','LEGS','PUSH','PULL','LEGS'], avatar: 'https://randomuser.me/api/portraits/men/67.jpg' },
+  { username: 'PabloMR', email: 'pablo@lowgim.com',   password: 'seed$pass', workouts: 28, streak: 1, targetVol: 240_000, level: 9,  xp: 3940, cats: ['LEGS','LOWER','UPPER','PUSH'],         avatar: 'https://randomuser.me/api/portraits/men/23.jpg' },
+  { username: 'AlexTG',  email: 'alex@lowgim.com',    password: 'seed$pass', workouts: 24, streak: 1, targetVol: 210_000, level: 8,  xp: 3370, cats: ['PUSH','PULL','UPPER'],                  avatar: 'https://randomuser.me/api/portraits/men/55.jpg' },
+  { username: 'LauraS',  email: 'laura@lowgim.com',   password: 'seed$pass', workouts: 22, streak: 2, targetVol: 185_000, level: 7,  xp: 2780, cats: ['UPPER','LOWER','UPPER','LOWER'],        avatar: 'https://randomuser.me/api/portraits/women/41.jpg' },
+  { username: 'SofiaAR', email: 'sofia@lowgim.com',   password: 'seed$pass', workouts: 17, streak: 0, targetVol: 140_000, level: 6,  xp: 2140, cats: ['LEGS','UPPER','LOWER'],                 avatar: 'https://randomuser.me/api/portraits/women/19.jpg' },
 ];
 
 // ─── main ─────────────────────────────────────────────────────────────────────
@@ -214,7 +223,10 @@ async function seed() {
       ),
       titles:    isIvan
         ? Array.from({ length: p.workouts }, (_, i) => ivanRoutines[i % ivanRoutines.length]!.title)
-        : undefined,
+        : Array.from({ length: p.workouts }, (_, i) => {
+            const cat = p.cats[i % p.cats.length]!;
+            return { PUSH: 'Empuje', PULL: 'Tirón', LEGS: 'Piernas', UPPER: 'Tren Superior', LOWER: 'Tren Inferior' }[cat] ?? cat;
+          }),
       durations: isIvan
         ? Array.from({ length: p.workouts }, (_, i) => ivanRoutines[i % ivanRoutines.length]!.duration)
         : undefined,
@@ -254,6 +266,7 @@ async function seed() {
       level:    profile.level,
       xp:       profile.xp,
       streak:   profile.streak,
+      avatar:   profile.avatar,
     });
 
     await Workout.insertMany(

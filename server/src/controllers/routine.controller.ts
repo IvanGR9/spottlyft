@@ -41,7 +41,7 @@ export async function deleteRoutineHandler(req: Request, res: Response): Promise
       res.status(404).json({ success: false, error: 'Rutina no encontrada' });
       return;
     }
-    res.status(204).send();
+    res.status(200).json({ success: true, data: null });
   } catch {
     res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }

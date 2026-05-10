@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { LeaderboardEntry } from '../types/index.js';
 import { gymClient } from '../api/client.js';
 import { useUser } from '../context/UserContext.js';
 
 type FilterType = 'volumen' | 'entrenamientos' | 'racha';
 
+function Avatar({ src, username, className }: { src?: string; username: string; className: string }) {
+  return (
+    <div className={`rounded-full overflow-hidden flex items-center justify-center font-bold text-white shrink-0 ${className}`}>
+      {src ? <img src={src} alt={username} className="w-full h-full object-cover" /> : username.charAt(0)}
+    </div>
+  );
+}
+
 export default function Leaderboard() {
   const { gym, user } = useUser();
+  const navigate = useNavigate();
   const gymId = gym?.id ?? user?.gymId ?? 'lowgim';
 
   const [filter, setFilter] = useState<FilterType>('volumen');
@@ -83,43 +93,51 @@ export default function Leaderboard() {
             <div className="flex items-end justify-center gap-4">
               {/* 2do */}
               {top3[1] && (
-                <div className="flex flex-col items-center gap-2 flex-1">
-                  <div className="w-12 h-12 rounded-full bg-[#1c1c1c] border-2 border-[#71717a] flex items-center justify-center text-white font-bold text-lg">
-                    {top3[1].username.charAt(0)}
-                  </div>
+                <button
+                  onClick={() => navigate(`/user/${top3[1].userId}`)}
+                  className="flex flex-col items-center gap-2 flex-1 group"
+                >
+                  <span className="text-lg">🥈</span>
+                  <Avatar src={top3[1].avatar} username={top3[1].username} className="w-12 h-12 bg-[#1c1c1c] border-2 border-[#71717a] text-lg group-hover:border-white transition-colors" />
                   <p className="text-white text-xs font-semibold truncate max-w-full text-center">{top3[1].username}</p>
                   <p className="text-[#71717a] text-xs">{top3[1].totalVolume.toLocaleString()} kg</p>
+                  <p className="text-[#52525b] text-[10px]">{top3[1].totalWorkouts} entrenos · {top3[1].streak}d racha</p>
                   <div className="bg-[#1c1c1c] rounded-t-xl w-full h-16 flex items-center justify-center">
                     <span className="text-[#71717a] font-bold text-xl">2</span>
                   </div>
-                </div>
+                </button>
               )}
               {/* 1ro */}
               {top3[0] && (
-                <div className="flex flex-col items-center gap-2 flex-1">
+                <button
+                  onClick={() => navigate(`/user/${top3[0].userId}`)}
+                  className="flex flex-col items-center gap-2 flex-1 group"
+                >
                   <span className="text-lg">👑</span>
-                  <div className="w-14 h-14 rounded-full bg-[#f97316] flex items-center justify-center text-white font-bold text-xl">
-                    {top3[0].username.charAt(0)}
-                  </div>
+                  <Avatar src={top3[0].avatar} username={top3[0].username} className="w-14 h-14 bg-[#f97316] text-xl group-hover:opacity-90 transition-opacity" />
                   <p className="text-white text-xs font-bold truncate max-w-full text-center">{top3[0].username}</p>
                   <p className="text-[#f97316] text-xs font-bold">{top3[0].totalVolume.toLocaleString()} kg</p>
+                  <p className="text-[#52525b] text-[10px]">{top3[0].totalWorkouts} entrenos · {top3[0].streak}d racha</p>
                   <div className="bg-[#f97316] rounded-t-xl w-full h-24 flex items-center justify-center">
                     <span className="text-white font-bold text-2xl">1</span>
                   </div>
-                </div>
+                </button>
               )}
               {/* 3ro */}
               {top3[2] && (
-                <div className="flex flex-col items-center gap-2 flex-1">
-                  <div className="w-12 h-12 rounded-full bg-[#1c1c1c] border-2 border-[#a16207] flex items-center justify-center text-white font-bold text-lg">
-                    {top3[2].username.charAt(0)}
-                  </div>
+                <button
+                  onClick={() => navigate(`/user/${top3[2].userId}`)}
+                  className="flex flex-col items-center gap-2 flex-1 group"
+                >
+                  <span className="text-lg">🥉</span>
+                  <Avatar src={top3[2].avatar} username={top3[2].username} className="w-12 h-12 bg-[#1c1c1c] border-2 border-[#a16207] text-lg group-hover:border-orange-400 transition-colors" />
                   <p className="text-white text-xs font-semibold truncate max-w-full text-center">{top3[2].username}</p>
                   <p className="text-[#71717a] text-xs">{top3[2].totalVolume.toLocaleString()} kg</p>
+                  <p className="text-[#52525b] text-[10px]">{top3[2].totalWorkouts} entrenos · {top3[2].streak}d racha</p>
                   <div className="bg-[#1c1c1c] rounded-t-xl w-full h-12 flex items-center justify-center">
                     <span className="text-[#a16207] font-bold text-xl">3</span>
                   </div>
-                </div>
+                </button>
               )}
             </div>
           </div>
@@ -127,17 +145,19 @@ export default function Leaderboard() {
           {/* Resto del ranking */}
           <div className="flex flex-col gap-2">
             {rest.map(entry => (
-              <div key={entry.userId} className="bg-[#141414] border border-[#1c1c1c] rounded-xl px-4 py-3 flex items-center gap-4">
+              <button
+                key={entry.userId}
+                onClick={() => navigate(`/user/${entry.userId}`)}
+                className="bg-[#141414] border border-[#1c1c1c] hover:border-[#2a2a2a] rounded-xl px-4 py-3 flex items-center gap-4 w-full text-left transition-colors"
+              >
                 <span className="text-[#71717a] font-bold text-sm w-6 text-center">{entry.rank}</span>
-                <div className="w-9 h-9 rounded-full bg-[#1c1c1c] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                  {entry.username.charAt(0)}
-                </div>
+                <Avatar src={entry.avatar} username={entry.username} className="w-9 h-9 bg-[#1c1c1c] text-sm" />
                 <div className="flex-1">
                   <p className="text-white text-sm font-semibold">{entry.username}</p>
                   <p className="text-[#52525b] text-xs">{entry.totalWorkouts} entrenos · {entry.streak} días racha</p>
                 </div>
                 <p className="text-[#f97316] font-bold text-sm">{entry.totalVolume.toLocaleString()} kg</p>
-              </div>
+              </button>
             ))}
           </div>
         </>

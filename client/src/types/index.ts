@@ -12,6 +12,9 @@ export interface User {
     gymId: string;
     streak?: number;
     avatarUrl?: string;
+    bio?: string;
+    avatarColor?: string;
+    avatar?: string;
 }
 
 export interface Exercise {
@@ -59,6 +62,7 @@ export interface RoutineExercise {
 }
 
 export interface Routine {
+    _id?: string;
     id: string;
     userId: string;
     gymId: string;
@@ -69,7 +73,7 @@ export interface Routine {
 export interface LeaderboardEntry {
     userId: string;
     username: string;
-    avatarUrl?: string;
+    avatar?: string;
     totalVolume: number;
     totalWorkouts: number;
     streak: number;

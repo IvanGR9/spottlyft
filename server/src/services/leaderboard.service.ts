@@ -52,6 +52,7 @@ export async function getLeaderboardByGym(gymId: string): Promise<LeaderboardEnt
         _id:           0,
         userId:        { $toString: '$_id' },
         username:      '$user.username',
+        avatar:        '$user.avatar',
         totalVolume:   1,
         totalWorkouts: 1,
         dates:         1,
@@ -63,6 +64,7 @@ export async function getLeaderboardByGym(gymId: string): Promise<LeaderboardEnt
   return rows.map((row, index) => ({
     userId:        row.userId,
     username:      row.username,
+    avatar:        row.avatar ?? '',
     totalVolume:   row.totalVolume,
     totalWorkouts: row.totalWorkouts,
     streak:        calculateStreak(row.dates),

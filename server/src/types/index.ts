@@ -22,6 +22,7 @@ export interface Workout {
 export interface LeaderboardEntry {
     userId: string;
     username: string;
+    avatar?: string;
     totalVolume: number;
     totalWorkouts: number;
     streak: number;

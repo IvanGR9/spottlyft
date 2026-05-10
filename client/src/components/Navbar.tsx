@@ -49,8 +49,14 @@ export default function Navbar() {
         {/* Usuario y logout */}
         <div className="border-t border-[#1c1c1c] pt-4">
           <div className="flex items-center gap-3 px-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-[#f97316] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-              {user?.username.charAt(0).toUpperCase()}
+            <div
+              className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+              style={user?.avatar ? {} : { backgroundColor: user?.avatarColor ?? '#f97316' }}
+            >
+              {user?.avatar
+                ? <img src={user.avatar} alt="avatar" className="w-full h-full object-cover" />
+                : user?.username.charAt(0).toUpperCase()
+              }
             </div>
             <div className="overflow-hidden">
               <p className="text-white text-xs font-semibold truncate">{user?.username}</p>
@@ -89,8 +95,20 @@ export default function Navbar() {
         <NavLink to="/profile" className={({ isActive }) =>
           `flex flex-col items-center gap-1 text-xs transition-colors ${isActive ? 'text-[#f97316]' : 'text-[#52525b]'}`
         }>
-          <span className="text-xl">👤</span>
-          <span>Perfil</span>
+          {({ isActive }) => (
+            <>
+              <div
+                className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center text-white text-[10px] font-bold"
+                style={user?.avatar ? {} : { backgroundColor: isActive ? '#f97316' : (user?.avatarColor ?? '#f97316') }}
+              >
+                {user?.avatar
+                  ? <img src={user.avatar} alt="avatar" className="w-full h-full object-cover" />
+                  : user?.username.charAt(0).toUpperCase()
+                }
+              </div>
+              <span>Perfil</span>
+            </>
+          )}
         </NavLink>
       </nav>
     </>

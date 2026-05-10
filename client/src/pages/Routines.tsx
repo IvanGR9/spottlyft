@@ -10,8 +10,25 @@ export default function Routines() {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  async function handleDelete(routine: Routine) {
+    const id = routine._id ?? routine.id;
+    setDeleting(id);
+    try {
+      await routineClient.delete(id);
+      setRoutines(prev => prev.filter(r => (r._id ?? r.id) !== id));
+    } catch (err) {
+      console.error('[handleDelete] error:', err);
+    } finally {
+      setDeleting(null);
+    }
+  }
 
   useEffect(() => {
+    setRoutines([]);
+    setError(false);
+    setLoading(true);
     if (!user || user.id === 'guest') { setLoading(false); return; }
     (async () => {
       try {
@@ -23,7 +40,7 @@ export default function Routines() {
         setLoading(false);
       }
     })();
-  }, [user]);
+  }, [user?.id]);
 
   if (user?.id === 'guest') {
     return (
@@ -55,7 +72,7 @@ export default function Routines() {
           <h1 className="text-2xl font-bold text-white">Entrenar</h1>
         </div>
         <button
-          onClick={() => navigate('/workout')}
+          onClick={() => navigate('/routines/new')}
           className="bg-[#f97316] hover:bg-[#ea6c0a] text-white font-bold px-4 py-2.5 rounded-xl transition-colors text-sm shrink-0"
         >
           + Nueva rutina
@@ -75,17 +92,18 @@ export default function Routines() {
       )}
 
       {!loading && !error && routines.length === 0 && (
-        <div className="bg-[#141414] border border-dashed border-[#2a2a2a] rounded-2xl p-10 text-center">
-          <p className="text-3xl mb-4">📋</p>
-          <p className="text-white font-semibold mb-2">Sin rutinas todavía</p>
-          <p className="text-[#71717a] text-sm mb-6">
-            Completa un entrenamiento para guardarlo como rutina o crea una desde cero.
+        <div className="flex flex-col items-center text-center pt-8 pb-4">
+          <div className="text-8xl mb-6 select-none">🏋️</div>
+          <h2 className="text-white font-black text-2xl mb-2">Tu primera rutina te espera</h2>
+          <p className="text-[#71717a] text-sm max-w-xs mb-2">
+            Los campeones no improvisan. Diseña tu plan, ejecútalo y supera tus límites cada semana.
           </p>
+          <p className="text-[#52525b] text-xs mb-8">Sin rutinas guardadas todavía.</p>
           <button
-            onClick={() => navigate('/workout')}
-            className="bg-[#f97316] hover:bg-[#ea6c0a] text-white font-bold px-6 py-3 rounded-xl transition-colors text-sm"
+            onClick={() => navigate('/routines/new')}
+            className="w-full bg-[#f97316] hover:bg-[#ea6c0a] active:scale-95 text-white font-black py-4 rounded-2xl text-base transition-all mb-3"
           >
-            Crear rutina
+            + Crear mi primera rutina
           </button>
         </div>
       )}
@@ -94,10 +112,10 @@ export default function Routines() {
         <div className="flex flex-col gap-3">
           {routines.map(routine => (
             <div
-              key={routine.id}
-              className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5 flex items-center justify-between gap-4"
+              key={routine._id ?? routine.id}
+              className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5 flex items-center gap-3"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-white font-bold text-base truncate">{routine.name}</p>
                 <p className="text-[#71717a] text-xs mt-0.5">
                   {routine.exercises.length} ejercicio{routine.exercises.length !== 1 ? 's' : ''} ·{' '}
@@ -119,12 +137,22 @@ export default function Routines() {
                   )}
                 </div>
               </div>
-              <button
-                onClick={() => navigate('/workout', { state: { routine } })}
-                className="shrink-0 bg-[#f97316] hover:bg-[#ea6c0a] text-white font-bold px-4 py-2.5 rounded-xl transition-colors text-sm"
-              >
-                Iniciar
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => navigate('/workout', { state: { routine } })}
+                  className="bg-[#f97316] hover:bg-[#ea6c0a] text-white font-bold px-4 py-2.5 rounded-xl transition-colors text-sm"
+                >
+                  Iniciar
+                </button>
+                <button
+                  onClick={() => handleDelete(routine)}
+                  disabled={deleting === (routine._id ?? routine.id)}
+                  className="text-[#52525b] hover:text-red-400 hover:bg-red-400/10 disabled:opacity-30 transition-colors p-2.5 rounded-xl text-base"
+                  aria-label="Eliminar rutina"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
           ))}
         </div>

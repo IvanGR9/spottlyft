@@ -9,6 +9,7 @@ import NotFound from './pages/NotFound.js';
 import Login from './pages/Login.js';
 import WorkoutDetail from './pages/WorkoutDetail.js';
 import Routines from './pages/Routines.js';
+import CreateRoutine from './pages/CreateRoutine.js';
 
 function ProtectedLayout() {
   const { user } = useUser();
@@ -22,6 +23,8 @@ function ProtectedLayout() {
         <Route path="/workout" element={<Workout />} />
         <Route path="/workout/:id" element={<WorkoutDetail />} />
         <Route path="/routines" element={<Routines />} />
+        <Route path="/routines/new" element={<CreateRoutine />} />
+        <Route path="/user/:userId" element={<Profile />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -1,10 +1,24 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useUser } from '../context/UserContext.js';
-import { workoutClient, gymClient } from '../api/client.js';
-import type { Workout, LeaderboardEntry } from '../types/index.js';
+import { workoutClient, gymClient, userClient, routineClient } from '../api/client.js';
+import type { Workout, LeaderboardEntry, User } from '../types/index.js';
 
 const tabs = ['Resumen', 'Historial', 'Logros'];
+
+const AVATAR_COLORS = ['#f97316', '#3b82f6', '#a855f7', '#22c55e', '#ec4899'];
+
+const MOTIVATIONAL = [
+  { icon: '🔥', phrase: '¡El primer paso es el más difícil, y ya lo diste!' },
+  { icon: '💪', phrase: 'Cada entrenamiento te acerca a la mejor versión de ti.' },
+  { icon: '🎯', phrase: 'La constancia supera al talento. Sigue adelante.' },
+];
+
+const WEEKLY_CHALLENGES = [
+  { icon: '📅', text: 'Completa 3 entrenamientos esta semana' },
+  { icon: '🏋️', text: 'Prueba un ejercicio nuevo hoy' },
+  { icon: '⚡', text: 'Supera tu volumen máximo de la semana pasada' },
+];
 
 function formatVolume(kg: number): string {
   if (kg >= 1000) return `${(kg / 1000).toFixed(1)}K kg`;
@@ -42,38 +56,175 @@ function computeBestMarks(workouts: Workout[]): { name: string; kg: number }[] {
 }
 
 export default function Profile() {
-  const { user, gym } = useUser();
+  const { user, gym, setUser } = useUser();
   const navigate = useNavigate();
+  const { userId: paramUserId } = useParams<{ userId: string }>();
+
+  const isOwnProfile = !paramUserId || paramUserId === user?.id;
+  const targetUserId = paramUserId ?? user?.id ?? '';
+
+  console.log('[Profile] paramUserId:', paramUserId, '| user?.id:', user?.id, '| isOwnProfile:', isOwnProfile);
+
+  const [profileUser, setProfileUser] = useState<User | null>(isOwnProfile ? user : null);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Resumen');
   const [visibleCount, setVisibleCount] = useState(5);
+  const [copiedWorkoutId, setCopiedWorkoutId] = useState<string | null>(null);
+
+  // bio
+  const [editingBio, setEditingBio] = useState(false);
+  const [bioValue, setBioValue] = useState('');
+  const [savingBio, setSavingBio] = useState(false);
+
+  // avatar menu / color / upload
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!user || user.id === 'guest') { setLoading(false); return; }
+    function onClickOutside(e: MouseEvent) {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
+        setShowAvatarMenu(false);
+      }
+    }
+    if (showAvatarMenu) document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [showAvatarMenu]);
+
+  function resizeToBase64(file: File, maxPx = 200): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(maxPx / img.width, maxPx / img.height, 1);
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.82));
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    e.target.value = '';
+    setUploadingAvatar(true);
+    try {
+      const base64 = await resizeToBase64(file);
+      console.log('[Avatar] base64 generado, longitud:', base64.length, '| inicio:', base64.slice(0, 40));
+      const updated = await userClient.update(user.id, { avatar: base64 });
+      console.log('[Avatar] respuesta servidor — updated.avatar longitud:', updated.avatar?.length ?? 0, '| inicio:', updated.avatar?.slice(0, 40));
+      const next = { ...user, avatar: updated.avatar };
+      setUser(next);
+      setProfileUser(prev => {
+        const newState = prev ? { ...prev, avatar: updated.avatar } : prev;
+        console.log('[Avatar] profileUser tras setProfileUser — avatar longitud:', newState?.avatar?.length ?? 0);
+        return newState;
+      });
+    } catch (err) {
+      console.error('[Avatar] error al subir:', err);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
+  async function handleRemoveAvatar() {
+    if (!user) return;
+    setShowAvatarMenu(false);
+    try {
+      const updated = await userClient.update(user.id, { avatar: '' });
+      const next = { ...user, avatar: '' };
+      setUser(next);
+      setProfileUser(prev => prev ? { ...prev, avatar: updated.avatar } : prev);
+    } catch { /* ignore */ }
+  }
+
+  async function handleSaveBio() {
+    if (!user) return;
+    setSavingBio(true);
+    try {
+      const updated = await userClient.update(user.id, { bio: bioValue });
+      setUser({ ...user, bio: updated.bio });
+      setProfileUser(prev => prev ? { ...prev, bio: updated.bio } : prev);
+      setEditingBio(false);
+    } catch { /* ignore */ } finally {
+      setSavingBio(false);
+    }
+  }
+
+  async function handleColorSelect(color: string) {
+    if (!user) return;
+    setShowAvatarMenu(false);
+    try {
+      const updated = await userClient.update(user.id, { avatarColor: color });
+      setUser({ ...user, avatarColor: updated.avatarColor });
+      setProfileUser(prev => prev ? { ...prev, avatarColor: updated.avatarColor } : prev);
+    } catch { /* ignore */ }
+  }
+
+  async function handleCopyRoutine(w: Workout) {
+    if (!user) return;
+    const id = w.id ?? String((w as Record<string, unknown>)._id);
+    try {
+      await routineClient.create({
+        userId: user.id,
+        gymId: user.gymId,
+        name: w.title ?? w.exercises[0]?.name ?? 'Rutina copiada',
+        exercises: w.exercises.map(ex => ({
+          name: ex.name ?? '',
+          muscleGroup: ex.exerciseId ?? undefined,
+          sets: ex.sets.map(s => ({ kg: s.kg ?? 0, reps: s.reps ?? 0, rir: s.rir ?? 0 })),
+        })),
+      });
+      setCopiedWorkoutId(id);
+      setTimeout(() => setCopiedWorkoutId(null), 2000);
+    } catch {
+      // silently ignore
+    }
+  }
+
+  useEffect(() => {
+    if (!targetUserId || (isOwnProfile && user?.id === 'guest')) {
+      setLoading(false);
+      return;
+    }
+    setWorkouts([]);
+    setLeaderboard([]);
+    setLoading(true);
+
     (async () => {
       try {
-        console.log('[Profile] user.id:', user.id);
-        const w = await workoutClient.getByUser(user.id);
-        console.log('[Profile] workouts response:', w);
-        setWorkouts(w);
-      } catch (err) {
-        console.error('[Profile] workouts fetch failed:', err);
-      }
+        if (!isOwnProfile) {
+          const fetchedUser = await userClient.getById(targetUserId);
+          setProfileUser(fetchedUser);
+        }
 
-      try {
-        const lb = await gymClient.getLeaderboard(user.gymId);
+        const [w, lb] = await Promise.all([
+          workoutClient.getByUser(targetUserId),
+          gymClient.getLeaderboard(isOwnProfile ? (user?.gymId ?? '') : 'lowgim'),
+        ]);
+        setWorkouts(w);
         setLeaderboard(lb);
       } catch (err) {
-        console.error('[Profile] leaderboard fetch failed, usando streak del contexto:', err);
+        console.error('[Profile] fetch failed:', err);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     })();
-  }, [user?.id, user?.gymId]);
+  }, [targetUserId]);
 
-  if (user?.id === 'guest') {
+  if (isOwnProfile && user?.id === 'guest') {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center px-6">
         <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-10 max-w-sm w-full text-center">
@@ -101,9 +252,9 @@ export default function Profile() {
 
   const totalVolume = workouts.reduce((sum, w) => sum + (w.totalVolume ?? 0), 0);
   const totalWorkouts = workouts.length;
-  const myEntry = leaderboard.find(e => e.userId === user?.id);
-  const streak = myEntry?.streak ?? user?.streak ?? 0;
-  const rankVol = rankOf(leaderboard, user!.id, 'totalVolume');
+  const myEntry = leaderboard.find(e => e.userId === targetUserId);
+  const streak = myEntry?.streak ?? profileUser?.streak ?? 0;
+  const rankVol = rankOf(leaderboard, targetUserId, 'totalVolume');
   const rankDisplay = rankVol > 0 ? `#${rankVol}` : '—';
 
   const bestMarks = computeBestMarks(workouts);
@@ -128,28 +279,147 @@ export default function Profile() {
 
       {/* Cabecera */}
       <div className="mb-8">
-        <p className="text-[#71717a] text-sm mb-1">Tu historial y estadísticas</p>
-        <h1 className="text-2xl font-bold text-white">Perfil</h1>
+        {!isOwnProfile && (
+          <button
+            onClick={() => navigate(-1)}
+            className="text-[#71717a] text-sm mb-3 flex items-center gap-1 hover:text-white transition-colors"
+          >
+            ‹ Volver
+          </button>
+        )}
+        <p className="text-[#71717a] text-sm mb-1">
+          {isOwnProfile ? 'Tu historial y estadísticas' : `Perfil de ${profileUser?.username ?? '…'}`}
+        </p>
+        <h1 className="text-2xl font-bold text-white">
+          {isOwnProfile ? 'Perfil' : (profileUser?.username ?? '…')}
+        </h1>
       </div>
 
       {/* Info usuario */}
       <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-6 mb-6">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-full bg-[#f97316] flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
-            {user?.username.charAt(0).toUpperCase()}
+
+          {/* Avatar */}
+          <div className="relative flex-shrink-0" ref={avatarMenuRef}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
+            {/* debug — quitar tras confirmar */}
+            {console.log('[Avatar render] profileUser?.avatar longitud:', profileUser?.avatar?.length ?? 0, '| user?.avatar longitud:', user?.avatar?.length ?? 0) as unknown as null}
+            <div
+              onClick={() => isOwnProfile && setShowAvatarMenu(p => !p)}
+              className={`w-16 h-16 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-2xl select-none ${isOwnProfile ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+              style={profileUser?.avatar ? {} : { backgroundColor: profileUser?.avatarColor ?? '#f97316' }}
+            >
+              {profileUser?.avatar
+                ? <img src={profileUser.avatar} alt="avatar" className="w-full h-full object-cover" />
+                : (profileUser?.username.charAt(0).toUpperCase() ?? '?')
+              }
+            </div>
+            {isOwnProfile && (
+              <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-[#1c1c1c] border border-[#2a2a2a] rounded-full flex items-center justify-center text-[10px] pointer-events-none">
+                {uploadingAvatar ? '⏳' : '✏️'}
+              </span>
+            )}
+            {showAvatarMenu && (
+              <div className="absolute top-[72px] left-0 z-20 bg-[#1c1c1c] border border-[#2a2a2a] rounded-xl p-3 shadow-xl" style={{ minWidth: 192 }}>
+                <p className="text-[#52525b] text-[10px] font-medium uppercase tracking-wider mb-2">Color</p>
+                <div className="flex gap-2 mb-3">
+                  {AVATAR_COLORS.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => handleColorSelect(c)}
+                      className="w-7 h-7 rounded-full border-2 transition-all duration-150 hover:scale-110"
+                      style={{
+                        backgroundColor: c,
+                        borderColor: (profileUser?.avatarColor ?? '#f97316') === c ? 'white' : 'transparent',
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="border-t border-[#2a2a2a] pt-2 flex flex-col gap-1">
+                  <button
+                    onClick={() => { setShowAvatarMenu(false); fileInputRef.current?.click(); }}
+                    className="w-full text-left text-sm text-[#a1a1aa] hover:text-white transition-colors py-1 flex items-center gap-2"
+                  >
+                    📷 Subir foto
+                  </button>
+                  {profileUser?.avatar && (
+                    <button
+                      onClick={handleRemoveAvatar}
+                      className="w-full text-left text-sm text-red-400/70 hover:text-red-400 transition-colors py-1 flex items-center gap-2"
+                    >
+                      🗑️ Eliminar foto
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
+
           <div className="flex-1">
             <div className="flex items-center gap-3">
-              <h2 className="text-white font-bold text-xl">{user?.username}</h2>
+              <h2 className="text-white font-bold text-xl">{profileUser?.username}</h2>
               {rankVol > 0 && (
                 <span className="bg-[#f97316] text-white text-xs font-bold px-2.5 py-1 rounded-full">
                   {rankVol === 1 ? '🥇' : rankVol === 2 ? '🥈' : rankVol === 3 ? '🥉' : '🏅'} {rankDisplay}
                 </span>
               )}
             </div>
-            <p className="text-[#52525b] text-sm mt-0.5">{gym?.name ?? 'Gimnasio'} · Miembro</p>
+            <p className="text-[#52525b] text-sm mt-0.5">{isOwnProfile ? (gym?.name ?? 'Gimnasio') : 'Lowgim'} · Miembro</p>
           </div>
         </div>
+
+        {/* Bio */}
+        {isOwnProfile && !editingBio && (
+          <button
+            onClick={() => { setBioValue(profileUser?.bio ?? ''); setEditingBio(true); }}
+            className="w-full text-left mb-4 text-sm transition-colors"
+          >
+            {profileUser?.bio
+              ? <span className="text-[#a1a1aa]">{profileUser.bio}</span>
+              : <span className="text-[#52525b] italic">Añade una descripción...</span>
+            }
+          </button>
+        )}
+        {isOwnProfile && editingBio && (
+          <div className="mb-4">
+            <textarea
+              value={bioValue}
+              onChange={e => setBioValue(e.target.value)}
+              maxLength={200}
+              rows={2}
+              autoFocus
+              placeholder="Cuéntanos algo sobre ti..."
+              className="w-full bg-[#1c1c1c] border border-[#2a2a2a] focus:border-[#f97316]/60 rounded-xl px-3 py-2 text-white text-sm resize-none outline-none transition-colors placeholder:text-[#52525b]"
+            />
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-[#52525b] text-xs">{bioValue.length}/200</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditingBio(false)}
+                  className="text-xs text-[#71717a] hover:text-white transition-colors px-3 py-1.5"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveBio}
+                  disabled={savingBio}
+                  className="text-xs bg-[#f97316] hover:bg-[#ea6c0a] disabled:opacity-50 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  {savingBio ? 'Guardando…' : 'Guardar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {!isOwnProfile && profileUser?.bio && (
+          <p className="text-[#a1a1aa] text-sm mb-4">{profileUser.bio}</p>
+        )}
 
         {/* Stats rápidas */}
         <div className="grid grid-cols-3 gap-4 pt-4 border-t border-[#1c1c1c]">
@@ -167,6 +437,30 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Sección motivacional — solo perfil propio con < 10 entrenos */}
+      {isOwnProfile && !loading && totalWorkouts < 10 && (
+        <div className="bg-[#141414] border border-[#1c1c1c] rounded-2xl p-5 mb-6">
+          <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-4">Tu camino empieza aquí</p>
+          <div className="flex flex-col gap-3 mb-5">
+            {MOTIVATIONAL.map((m, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <span className="text-lg leading-none mt-0.5">{m.icon}</span>
+                <p className="text-[#a1a1aa] text-sm">{m.phrase}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[#71717a] text-xs font-medium uppercase tracking-wider mb-3">Retos semanales</p>
+          <div className="flex flex-col gap-2">
+            {WEEKLY_CHALLENGES.map((c, i) => (
+              <div key={i} className="flex items-center gap-3 bg-[#1c1c1c] rounded-xl px-3 py-2.5">
+                <span className="text-base">{c.icon}</span>
+                <p className="text-white text-sm">{c.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 bg-[#141414] border border-[#1c1c1c] rounded-xl p-1 mb-6">
@@ -235,25 +529,44 @@ export default function Profile() {
           )}
           {!loading && workouts.slice(0, visibleCount).map(w => {
             const key = w.id ?? String((w as Record<string, unknown>)._id);
+            const copied = copiedWorkoutId === key;
             return (
-              <button
+              <div
                 key={key}
-                onClick={() => navigate(`/workout/${key}`)}
-                className="bg-[#141414] border border-[#1c1c1c] rounded-xl px-4 py-3 flex items-center justify-between w-full text-left hover:border-[#f97316]/30 transition-colors group"
+                className="bg-[#141414] border border-[#1c1c1c] rounded-xl overflow-hidden hover:border-[#f97316]/30 transition-colors"
               >
-                <div className="min-w-0">
-                  <p className="text-white font-semibold text-sm truncate">
-                    {w.title ?? w.exercises[0]?.name ?? 'Entrenamiento'}
-                  </p>
-                  <p className="text-[#52525b] text-xs mt-0.5">
-                    {formatDate(w.date)}{w.duration ? ` · ${w.duration} min` : ''}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0 ml-3">
-                  <p className="text-[#f97316] font-bold text-sm">{formatVolume(w.totalVolume)}</p>
-                  <span className="text-[#52525b] group-hover:text-[#f97316] transition-colors text-xs">›</span>
-                </div>
-              </button>
+                <button
+                  onClick={() => navigate(`/workout/${key}`)}
+                  className="px-4 py-3 flex items-center justify-between w-full text-left group"
+                >
+                  <div className="min-w-0">
+                    <p className="text-white font-semibold text-sm truncate">
+                      {w.title ?? w.exercises[0]?.name ?? 'Entrenamiento'}
+                    </p>
+                    <p className="text-[#52525b] text-xs mt-0.5">
+                      {formatDate(w.date)}{w.duration ? ` · ${w.duration} min` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-3">
+                    <p className="text-[#f97316] font-bold text-sm">{formatVolume(w.totalVolume)}</p>
+                    <span className="text-[#52525b] group-hover:text-[#f97316] transition-colors text-xs">›</span>
+                  </div>
+                </button>
+                {!isOwnProfile && (
+                  <div className="border-t border-[#1c1c1c] px-4 py-2 flex justify-end">
+                    <button
+                      onClick={() => handleCopyRoutine(w)}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all duration-150 cursor-pointer ${
+                        copied
+                          ? 'bg-green-500/10 border-green-500/40 text-green-400'
+                          : 'border-[#f97316]/40 text-[#f97316] hover:bg-[#f97316]/10 hover:border-[#f97316]'
+                      }`}
+                    >
+                      {copied ? '¡Rutina copiada! ✓' : 'Copiar rutina'}
+                    </button>
+                  </div>
+                )}
+              </div>
             );
           })}
           {!loading && visibleCount < workouts.length && (

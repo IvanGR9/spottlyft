@@ -33,6 +33,9 @@ export const userClient = {
         request<User>('GET', `/users?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`),
     create: (data: { username: string; email: string; gymId: string; password: string }) =>
         request<User>('POST', '/users', data),
+    getByEmail: (email: string) => request<User>('GET', `/users/by-email?email=${encodeURIComponent(email)}`),
+    update: (id: string, data: { bio?: string; avatarColor?: string; avatar?: string }) =>
+        request<User>('PATCH', `/users/${id}`, data),
 };
 
 export const routineClient = {
