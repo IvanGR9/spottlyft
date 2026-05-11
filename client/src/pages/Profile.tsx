@@ -175,7 +175,7 @@ export default function Profile() {
 
   async function handleCopyRoutine(w: Workout) {
     if (!user) return;
-    const id = w.id ?? String((w as Record<string, unknown>)._id);
+    const id = w.id ?? String((w as unknown as Record<string, unknown>)._id);
     try {
       await routineClient.create({
         userId: user.id,
@@ -528,7 +528,7 @@ export default function Profile() {
             </div>
           )}
           {!loading && workouts.slice(0, visibleCount).map(w => {
-            const key = w.id ?? String((w as Record<string, unknown>)._id);
+            const key = w.id ?? String((w as unknown as Record<string, unknown>)._id);
             const copied = copiedWorkoutId === key;
             return (
               <div
